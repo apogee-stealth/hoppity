@@ -1,6 +1,6 @@
 {
     "name": "@apogeelabs/hoppity-logger",
-    "version": "0.0.0",
+    "version": "0.1.0",
     "description": "Logger utilities for hoppity",
     "author": "Apogee Travel",
     "contributors": [

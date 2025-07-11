@@ -1,4 +1,4 @@
-# @apogeelabs/hoppity-rpc
+# @apogeelabs/hoppity-logger
 
 ## 0.1.0
 
