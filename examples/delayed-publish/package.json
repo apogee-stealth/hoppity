@@ -1,0 +1,36 @@
+{
+    "name": "hoppity-delayed-publish-example",
+    "version": "1.0.0",
+    "description": "Example application demonstrating hoppity with delayed publish functionality",
+    "private": true,
+    "scripts": {
+        "build": "tsc",
+        "start:delayed-scheduler-svc": "tsx src/delayed-scheduler-svc/index.ts",
+        "start:delayed-processor-svc": "tsx src/delayed-processor-svc/index.ts",
+        "dev": "concurrently \"pnpm start:delayed-scheduler-svc\" \"pnpm start:delayed-processor-svc\"",
+        "dev:delayed-scheduler-svc": "tsx watch src/delayed-scheduler-svc/index.ts",
+        "dev:delayed-processor-svc": "tsx watch src/delayed-processor-svc/index.ts",
+        "dev:both": "concurrently \"pnpm dev:delayed-scheduler-svc\" \"pnpm dev:delayed-processor-svc\"",
+        "clean": "rm -rf dist",
+        "lint": "eslint --config ../../.eslintrc.js 'src/**/*.{ts,tsx}'"
+    },
+    "dependencies": {
+        "@apogeelabs/hoppity": "file:../../packages/hoppity",
+        "@apogeelabs/hoppity-delayed-publish": "file:../../packages/hoppity-delayed-publish",
+        "@apogeelabs/hoppity-logger": "file:../../packages/hoppity-logger",
+        "@apogeelabs/hoppity-subscriptions": "file:../../packages/hoppity-subscriptions",
+        "rascal": "^15.0.0",
+        "dotenv": "^16.3.1"
+    },
+    "devDependencies": {
+        "@types/node": "^20.8.0",
+        "@types/rascal": "^10.2.1",
+        "concurrently": "^8.2.2",
+        "eslint": "^8.0.1",
+        "tsx": "^4.6.0",
+        "typescript": "^5.2.2"
+    },
+    "engines": {
+        "node": ">=16.0.0"
+    }
+}
