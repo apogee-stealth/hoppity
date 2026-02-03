@@ -72,4 +72,4 @@ When generating or modifying unit tests, follow the conventions in `.ai/UnitTest
 
 ## Node Version
 
-Node 20 (see `.nvmrc`). pnpm 8.7.5 (enforced via `packageManager` field).
+Node 22 (see `.nvmrc`). pnpm 8.7.5 (enforced via `packageManager` field).
