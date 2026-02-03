@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(grep:*)",
+      "Bash(xargs:*)",
+      "Bash(pnpm --filter hoppity test:*)",
+      "Bash(pnpm --filter hoppity build:*)"
+    ]
+  }
+}
