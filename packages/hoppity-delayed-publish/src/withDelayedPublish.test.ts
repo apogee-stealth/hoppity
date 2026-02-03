@@ -1,13 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 export default {};
 
-const mockCloneDeep = jest.fn();
-jest.mock("lodash", () => {
-    return {
-        cloneDeep: mockCloneDeep,
-    };
-});
-
 const mockSetupDelayedPublishBroker = jest.fn();
 jest.mock("./setupDelayedPublishBroker", () => {
     return {
@@ -58,7 +51,6 @@ describe("packages > hoppity-delayed-publish > src > withDelayedPublish", () => 
             publish: jest.fn(),
             subscribe: jest.fn(),
         };
-        mockCloneDeep.mockReturnValue(mockTopology);
         mockSetupDelayedPublishBroker.mockResolvedValue(undefined);
     });
 
@@ -157,8 +149,8 @@ describe("packages > hoppity-delayed-publish > src > withDelayedPublish", () => 
             });
 
             describe("when the middleware function is called", () => {
-                beforeEach(async () => {
-                    result = await middlewareFunction(mockTopology, mockContext);
+                beforeEach(() => {
+                    result = middlewareFunction(mockTopology, mockContext);
                 });
 
                 it("should log info message about applying middleware", () => {
@@ -171,10 +163,6 @@ describe("packages > hoppity-delayed-publish > src > withDelayedPublish", () => 
                     expect(mockLogger.debug).toHaveBeenCalledWith(
                         "[DelayedPublish] Previous middleware: test-middleware"
                     );
-                });
-
-                it("should clone the topology", () => {
-                    expect(mockCloneDeep).toHaveBeenCalledWith(mockTopology);
                 });
 
                 it("should store delayed publish configuration in context", () => {
@@ -190,30 +178,30 @@ describe("packages > hoppity-delayed-publish > src > withDelayedPublish", () => 
 
                 it("should return topology and onBrokerCreated callback", () => {
                     expect(result).toEqual({
-                        topology: mockTopology,
+                        topology: expect.any(Object),
                         onBrokerCreated: expect.any(Function),
                     });
                 });
 
                 describe("when topology has no vhosts", () => {
-                    beforeEach(async () => {
+                    beforeEach(() => {
                         mockTopology.vhosts = undefined;
-                        result = await middlewareFunction(mockTopology, mockContext);
+                        result = middlewareFunction(mockTopology, mockContext);
                     });
 
                     it("should create vhosts object", () => {
-                        expect(mockTopology.vhosts).toEqual({});
+                        expect(result.topology.vhosts).toEqual({});
                     });
                 });
 
                 describe("when vhost has no queues", () => {
-                    beforeEach(async () => {
+                    beforeEach(() => {
                         mockTopology.vhosts["/"].queues = undefined;
-                        result = await middlewareFunction(mockTopology, mockContext);
+                        result = middlewareFunction(mockTopology, mockContext);
                     });
 
                     it("should create queues object", () => {
-                        expect(mockTopology.vhosts["/"].queues).toEqual({
+                        expect(result.topology.vhosts!["/"].queues).toEqual({
                             PIZZA_SERVICE_wait: {
                                 options: {
                                     durable: false,
@@ -241,13 +229,13 @@ describe("packages > hoppity-delayed-publish > src > withDelayedPublish", () => 
                 });
 
                 describe("when vhost has no publications", () => {
-                    beforeEach(async () => {
+                    beforeEach(() => {
                         mockTopology.vhosts["/"].publications = undefined;
-                        result = await middlewareFunction(mockTopology, mockContext);
+                        result = middlewareFunction(mockTopology, mockContext);
                     });
 
                     it("should create publications object", () => {
-                        expect(mockTopology.vhosts["/"].publications).toEqual({
+                        expect(result.topology.vhosts!["/"].publications).toEqual({
                             PIZZA_SERVICE_delayed_wait: {
                                 exchange: "",
                                 routingKey: "PIZZA_SERVICE_wait",
@@ -260,13 +248,13 @@ describe("packages > hoppity-delayed-publish > src > withDelayedPublish", () => 
                 });
 
                 describe("when vhost has no subscriptions", () => {
-                    beforeEach(async () => {
+                    beforeEach(() => {
                         mockTopology.vhosts["/"].subscriptions = undefined;
-                        result = await middlewareFunction(mockTopology, mockContext);
+                        result = middlewareFunction(mockTopology, mockContext);
                     });
 
                     it("should create subscriptions object", () => {
-                        expect(mockTopology.vhosts["/"].subscriptions).toEqual({
+                        expect(result.topology.vhosts!["/"].subscriptions).toEqual({
                             PIZZA_SERVICE_ready_subscription: {
                                 queue: "PIZZA_SERVICE_ready",
                                 options: {
@@ -278,15 +266,15 @@ describe("packages > hoppity-delayed-publish > src > withDelayedPublish", () => 
                 });
 
                 describe("when vhost has existing queues", () => {
-                    beforeEach(async () => {
+                    beforeEach(() => {
                         mockTopology.vhosts["/"].queues = {
                             existing_queue: { options: {} },
                         };
-                        result = await middlewareFunction(mockTopology, mockContext);
+                        result = middlewareFunction(mockTopology, mockContext);
                     });
 
                     it("should add delayed publish queues to existing queues", () => {
-                        expect(mockTopology.vhosts["/"].queues).toEqual({
+                        expect(result.topology.vhosts!["/"].queues).toEqual({
                             existing_queue: { options: {} },
                             PIZZA_SERVICE_wait: {
                                 options: {
@@ -315,15 +303,15 @@ describe("packages > hoppity-delayed-publish > src > withDelayedPublish", () => 
                 });
 
                 describe("when vhost has existing publications", () => {
-                    beforeEach(async () => {
+                    beforeEach(() => {
                         mockTopology.vhosts["/"].publications = {
                             existing_publication: { exchange: "test" },
                         };
-                        result = await middlewareFunction(mockTopology, mockContext);
+                        result = middlewareFunction(mockTopology, mockContext);
                     });
 
                     it("should add delayed publish publication to existing publications", () => {
-                        expect(mockTopology.vhosts["/"].publications).toEqual({
+                        expect(result.topology.vhosts!["/"].publications).toEqual({
                             existing_publication: { exchange: "test" },
                             PIZZA_SERVICE_delayed_wait: {
                                 exchange: "",
@@ -337,15 +325,15 @@ describe("packages > hoppity-delayed-publish > src > withDelayedPublish", () => 
                 });
 
                 describe("when vhost has existing subscriptions", () => {
-                    beforeEach(async () => {
+                    beforeEach(() => {
                         mockTopology.vhosts["/"].subscriptions = {
                             existing_subscription: { queue: "test" },
                         };
-                        result = await middlewareFunction(mockTopology, mockContext);
+                        result = middlewareFunction(mockTopology, mockContext);
                     });
 
                     it("should add delayed publish subscription to existing subscriptions", () => {
-                        expect(mockTopology.vhosts["/"].subscriptions).toEqual({
+                        expect(result.topology.vhosts!["/"].subscriptions).toEqual({
                             existing_subscription: { queue: "test" },
                             PIZZA_SERVICE_ready_subscription: {
                                 queue: "PIZZA_SERVICE_ready",
@@ -358,19 +346,19 @@ describe("packages > hoppity-delayed-publish > src > withDelayedPublish", () => 
                 });
 
                 describe("when multiple vhosts exist", () => {
-                    beforeEach(async () => {
+                    beforeEach(() => {
                         mockTopology.vhosts = {
                             "/": { queues: {}, publications: {}, subscriptions: {} },
                             "/test": { queues: {}, publications: {}, subscriptions: {} },
                         };
-                        result = await middlewareFunction(mockTopology, mockContext);
+                        result = middlewareFunction(mockTopology, mockContext);
                     });
 
                     it("should add delayed publish infrastructure to all vhosts", () => {
-                        expect(mockTopology.vhosts["/"].queues).toHaveProperty(
+                        expect(result.topology.vhosts!["/"].queues).toHaveProperty(
                             "PIZZA_SERVICE_wait"
                         );
-                        expect(mockTopology.vhosts["/test"].queues).toHaveProperty(
+                        expect(result.topology.vhosts!["/test"].queues).toHaveProperty(
                             "PIZZA_SERVICE_wait"
                         );
                     });
@@ -386,9 +374,9 @@ describe("packages > hoppity-delayed-publish > src > withDelayedPublish", () => 
                 });
 
                 describe("when context has no middleware names", () => {
-                    beforeEach(async () => {
+                    beforeEach(() => {
                         mockContext.middlewareNames = [];
-                        result = await middlewareFunction(mockTopology, mockContext);
+                        result = middlewareFunction(mockTopology, mockContext);
                     });
 
                     it("should log debug message with 'none'", () => {
@@ -399,12 +387,12 @@ describe("packages > hoppity-delayed-publish > src > withDelayedPublish", () => 
                 });
 
                 describe("when context has existing delayed publish config", () => {
-                    beforeEach(async () => {
+                    beforeEach(() => {
                         mockContext.data.delayedPublishConfig = {
                             serviceName: "EXISTING_SERVICE",
                             instanceId: "EXISTING_INSTANCE",
                         };
-                        result = await middlewareFunction(mockTopology, mockContext);
+                        result = middlewareFunction(mockTopology, mockContext);
                     });
 
                     it("should log warning about existing configuration", () => {
@@ -425,10 +413,10 @@ describe("packages > hoppity-delayed-publish > src > withDelayedPublish", () => 
                 });
 
                 describe("when defaultDelay is not provided", () => {
-                    beforeEach(async () => {
+                    beforeEach(() => {
                         delete options.defaultDelay;
                         middlewareFunction = withDelayedPublish(options);
-                        result = await middlewareFunction(mockTopology, mockContext);
+                        result = middlewareFunction(mockTopology, mockContext);
                     });
 
                     it("should use default delay of 30000", () => {
@@ -437,8 +425,8 @@ describe("packages > hoppity-delayed-publish > src > withDelayedPublish", () => 
                 });
 
                 describe("when onBrokerCreated callback is called", () => {
-                    beforeEach(async () => {
-                        await result.onBrokerCreated!(mockBroker);
+                    beforeEach(() => {
+                        result.onBrokerCreated!(mockBroker);
                     });
 
                     it("should call setupDelayedPublishBroker with broker and options", () => {
@@ -464,7 +452,7 @@ describe("packages > hoppity-delayed-publish > src > withDelayedPublish", () => 
                                     critical: jest.fn(),
                                 },
                             };
-                            result = await middlewareFunction(mockTopology, newContext);
+                            result = middlewareFunction(mockTopology, newContext);
                             await result.onBrokerCreated!(mockBroker);
                         });
 
@@ -517,7 +505,7 @@ describe("packages > hoppity-delayed-publish > src > withDelayedPublish", () => 
                                 },
                             };
 
-                            result = await middlewareWithFalsyLogger(mockTopology, newContext);
+                            result = middlewareWithFalsyLogger(mockTopology, newContext);
                             await result.onBrokerCreated!(mockBroker);
                         });
 

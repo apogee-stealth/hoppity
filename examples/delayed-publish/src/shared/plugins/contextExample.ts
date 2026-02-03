@@ -1,6 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { MiddlewareContext, MiddlewareFunction, MiddlewareResult } from "@apogeelabs/hoppity";
-import { cloneDeep } from "lodash";
 import { BrokerConfig } from "rascal";
 
 /**
@@ -14,7 +13,7 @@ export const withContextExample: MiddlewareFunction = (
     context.logger.info("🔧 [ContextExample] Applying context example middleware...");
 
     // Clone the topology to avoid mutations
-    const modifiedTopology = cloneDeep(topology);
+    const modifiedTopology = structuredClone(topology);
 
     // Add exchanges to topology
     if (modifiedTopology.vhosts) {

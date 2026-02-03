@@ -48,7 +48,6 @@
     ],
     "devDependencies": {
         "@types/jest": "^29.5.5",
-        "@types/lodash": "^4.14.202",
         "@types/rascal": "^10.2.1",
         "eslint": "^8.0.1",
         "eslint-config-standard": "^17.1.0",
@@ -63,7 +62,6 @@
     },
     "dependencies": {
         "@apogeelabs/hoppity": "workspace:*",
-        "lodash": "^4.17.21",
         "rascal": "^20.1.1"
     }
 }

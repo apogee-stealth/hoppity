@@ -1,6 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { MiddlewareFunction, MiddlewareResult, MiddlewareContext } from "@apogeelabs/hoppity";
-import { cloneDeep } from "lodash";
 import { BrokerConfig, BrokerAsPromised } from "rascal";
 
 /**
@@ -14,7 +13,7 @@ export const exchangeSetupMiddleware: MiddlewareFunction = (
     console.log("🔧 [ExchangeSetup] Applying exchange setup middleware...");
 
     // Clone the topology to avoid mutations
-    const modifiedTopology = cloneDeep(topology);
+    const modifiedTopology = structuredClone(topology);
 
     // Add exchanges to topology
     if (modifiedTopology.vhosts) {
@@ -84,7 +83,7 @@ export const queueSetupMiddleware: MiddlewareFunction = (
     });
 
     // Clone the topology to avoid mutations
-    const modifiedTopology = cloneDeep(topology);
+    const modifiedTopology = structuredClone(topology);
 
     // Add queues bound to the exchanges
     if (modifiedTopology.vhosts) {

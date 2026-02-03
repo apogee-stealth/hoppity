@@ -1,5 +1,3 @@
-import { cloneDeep } from "lodash";
-
 /* eslint-disable @typescript-eslint/no-explicit-any */
 const mockBrokerAsPromised = {
     create: jest.fn(),
@@ -121,7 +119,7 @@ describe("packages > hoppity > src > RascalBuilder", () => {
 
         beforeEach(() => {
             getModifiedTopology = function () {
-                const clonedTopology = cloneDeep(topology);
+                const clonedTopology = structuredClone(topology);
                 clonedTopology.vhosts["/"].publications.mwPublication = {
                     exchange: "calzoneExchange",
                 };
@@ -129,8 +127,8 @@ describe("packages > hoppity > src > RascalBuilder", () => {
             };
             onBrokerCreated = jest.fn();
             mwFn = jest.fn().mockImplementationOnce((topology: any, context: any) => {
-                passedTopology = cloneDeep(topology);
-                passedContext = cloneDeep(context);
+                passedTopology = structuredClone(topology);
+                passedContext = structuredClone(context);
                 rawContext = context;
                 return {
                     topology: getModifiedTopology(),
@@ -157,7 +155,7 @@ describe("packages > hoppity > src > RascalBuilder", () => {
             describe("and the middleware is not anonymous (has a name set)", () => {
                 beforeEach(async () => {
                     const mod = await import("./RascalBuilder");
-                    instance = new mod.RascalBuilder(cloneDeep(topology));
+                    instance = new mod.RascalBuilder(structuredClone(topology));
                     instance.use(mwFn);
                     broker = await instance.build();
                 });
@@ -187,10 +185,10 @@ describe("packages > hoppity > src > RascalBuilder", () => {
             describe("and the middleware is anonymous (has no name set)", () => {
                 beforeEach(async () => {
                     const mod = await import("./RascalBuilder");
-                    instance = new mod.RascalBuilder(cloneDeep(topology));
+                    instance = new mod.RascalBuilder(structuredClone(topology));
                     instance.use(function (topology: any, context: any) {
-                        passedTopology = cloneDeep(topology);
-                        passedContext = cloneDeep(context);
+                        passedTopology = structuredClone(topology);
+                        passedContext = structuredClone(context);
                         rawContext = context;
                         return {
                             topology: getModifiedTopology(),
@@ -220,7 +218,7 @@ describe("packages > hoppity > src > RascalBuilder", () => {
                         throw new Error("E_NO_EPSTEIN_FILES");
                     });
                     const mod = await import("./RascalBuilder");
-                    instance = new mod.RascalBuilder(cloneDeep(topology));
+                    instance = new mod.RascalBuilder(structuredClone(topology));
                     instance.use(mwFn);
                     try {
                         broker = await instance.build();
@@ -244,7 +242,7 @@ describe("packages > hoppity > src > RascalBuilder", () => {
                         throw "E_NO_EPSTEIN_FILES";
                     });
                     const mod = await import("./RascalBuilder");
-                    instance = new mod.RascalBuilder(cloneDeep(topology));
+                    instance = new mod.RascalBuilder(structuredClone(topology));
                     instance.use(mwFn);
                     try {
                         broker = await instance.build();
@@ -269,7 +267,7 @@ describe("packages > hoppity > src > RascalBuilder", () => {
                         throw new Error("E_NO_BUDGET_CUTS");
                     };
                     const mod = await import("./RascalBuilder");
-                    instance = new mod.RascalBuilder(cloneDeep(topology));
+                    instance = new mod.RascalBuilder(structuredClone(topology));
                     instance.use(errMwFn);
                     try {
                         broker = await instance.build();
@@ -291,7 +289,7 @@ describe("packages > hoppity > src > RascalBuilder", () => {
                         throw "E_NO_BUDGET_CUTS";
                     });
                     const mod = await import("./RascalBuilder");
-                    instance = new mod.RascalBuilder(cloneDeep(topology));
+                    instance = new mod.RascalBuilder(structuredClone(topology));
                     instance.use(errMwFn);
                     try {
                         broker = await instance.build();
@@ -322,7 +320,7 @@ describe("packages > hoppity > src > RascalBuilder", () => {
                         };
                     });
                     const mod = await import("./RascalBuilder");
-                    instance = new mod.RascalBuilder(cloneDeep(topology));
+                    instance = new mod.RascalBuilder(structuredClone(topology));
                     instance.use(errMwFn);
                     mockBrokerInstance =
                         mockBrokerAsPromised.create.mock.results[0]?.value ??
@@ -359,7 +357,7 @@ describe("packages > hoppity > src > RascalBuilder", () => {
                         };
                     });
                     const mod = await import("./RascalBuilder");
-                    instance = new mod.RascalBuilder(cloneDeep(topology));
+                    instance = new mod.RascalBuilder(structuredClone(topology));
                     instance.use(errMwFn);
                     mockBrokerInstance =
                         mockBrokerAsPromised.create.mock.results[0]?.value ??
@@ -398,7 +396,7 @@ describe("packages > hoppity > src > RascalBuilder", () => {
                         };
                     });
                     const mod = await import("./RascalBuilder");
-                    instance = new mod.RascalBuilder(cloneDeep(topology));
+                    instance = new mod.RascalBuilder(structuredClone(topology));
                     instance.use(errMwFn);
                     try {
                         broker = await instance.build();

@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { cloneDeep, isEqual } from "lodash";
+import isEqual from "fast-deep-equal";
 import { BrokerAsPromised, type BrokerConfig } from "rascal";
 import { defaultLogger } from "./consoleLogger";
 import type {
@@ -52,7 +52,7 @@ export class RascalBuilder implements BuilderInterface {
      */
     constructor(initialTopology: BrokerConfig = {}) {
         // Deep clone to prevent mutations to the original
-        this.topology = cloneDeep(initialTopology);
+        this.topology = structuredClone(initialTopology);
     }
 
     /**

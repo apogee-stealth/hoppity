@@ -1,12 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-const mockCloneDeep = jest.fn();
-jest.mock("lodash", () => {
-    return {
-        cloneDeep: mockCloneDeep,
-    };
-});
-
 const mockSetupRpcBroker = jest.fn();
 jest.mock("./setupRpcBroker", () => {
     return {
@@ -62,7 +55,6 @@ describe("hoppity-rpc > src > withRpcSupport", () => {
                 },
             },
         };
-        mockCloneDeep.mockReturnValue(mockTopology);
         mockGenerateReplyQueueName.mockReturnValue("rpc_test_service_test_instance_reply");
         mockGenerateInboundQueueName.mockReturnValue("rpc_test_service_test_instance_inbound");
         mockGenerateServiceRpcBindingPattern.mockReturnValue("rpc.test-service.#.request");
@@ -256,10 +248,6 @@ describe("hoppity-rpc > src > withRpcSupport", () => {
                     );
                 });
 
-                it("should clone the topology", () => {
-                    expect(mockCloneDeep).toHaveBeenCalledWith(mockTopology);
-                });
-
                 it("should store RPC configuration in context", () => {
                     expect(mockContext.data.rpcConfig).toEqual({
                         serviceName: "test-service",
@@ -291,7 +279,7 @@ describe("hoppity-rpc > src > withRpcSupport", () => {
                 });
 
                 it("should return the cloned topology", () => {
-                    expect(result.topology).toBe(mockTopology);
+                    expect(result.topology).not.toBe(mockTopology);
                 });
 
                 describe("when onBrokerCreated is called", () => {
@@ -355,7 +343,7 @@ describe("hoppity-rpc > src > withRpcSupport", () => {
                 });
 
                 it("should create vhosts object", () => {
-                    expect(mockTopology.vhosts).toEqual({});
+                    expect(result.topology.vhosts).toEqual({});
                 });
             });
 
@@ -366,7 +354,7 @@ describe("hoppity-rpc > src > withRpcSupport", () => {
                 });
 
                 it("should create exchanges object", () => {
-                    expect(mockTopology.vhosts["/"].exchanges).toEqual({
+                    expect(result.topology.vhosts["/"].exchanges).toEqual({
                         rpc_requests: {
                             type: "topic",
                             options: {
@@ -384,7 +372,7 @@ describe("hoppity-rpc > src > withRpcSupport", () => {
                 });
 
                 it("should create queues object with reply and inbound queues", () => {
-                    expect(mockTopology.vhosts["/"].queues).toEqual({
+                    expect(result.topology.vhosts["/"].queues).toEqual({
                         rpc_test_service_test_instance_reply: {
                             options: {
                                 exclusive: true,
@@ -408,7 +396,7 @@ describe("hoppity-rpc > src > withRpcSupport", () => {
                 });
 
                 it("should create bindings object with inbound queue binding", () => {
-                    expect(mockTopology.vhosts["/"].bindings).toEqual({
+                    expect(result.topology.vhosts["/"].bindings).toEqual({
                         rpc_test_service_test_instance_inbound_binding: {
                             source: "rpc_requests",
                             destination: "rpc_test_service_test_instance_inbound",
@@ -426,7 +414,7 @@ describe("hoppity-rpc > src > withRpcSupport", () => {
                 });
 
                 it("should create subscriptions object with inbound and reply subscriptions", () => {
-                    expect(mockTopology.vhosts["/"].subscriptions).toEqual({
+                    expect(result.topology.vhosts["/"].subscriptions).toEqual({
                         rpc_test_service_test_instance_inbound_subscription: {
                             queue: "rpc_test_service_test_instance_inbound",
                             options: {
@@ -450,7 +438,7 @@ describe("hoppity-rpc > src > withRpcSupport", () => {
                 });
 
                 it("should create publications object with request and reply publications", () => {
-                    expect(mockTopology.vhosts["/"].publications).toEqual({
+                    expect(result.topology.vhosts["/"].publications).toEqual({
                         rpc_request: {
                             exchange: "rpc_requests",
                         },
@@ -481,8 +469,10 @@ describe("hoppity-rpc > src > withRpcSupport", () => {
                 });
 
                 it("should add RPC infrastructure to all vhosts", () => {
-                    expect(mockTopology.vhosts["/"].exchanges).toHaveProperty("rpc_requests");
-                    expect(mockTopology.vhosts["/test"].exchanges).toHaveProperty("rpc_requests");
+                    expect(result.topology.vhosts["/"].exchanges).toHaveProperty("rpc_requests");
+                    expect(result.topology.vhosts["/test"].exchanges).toHaveProperty(
+                        "rpc_requests"
+                    );
                 });
 
                 it("should log debug information for each vhost", () => {
