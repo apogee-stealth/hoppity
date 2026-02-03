@@ -19,7 +19,7 @@
         "@apogeelabs/hoppity-rpc": "file:../../packages/hoppity-rpc",
         "@apogeelabs/hoppity-subscriptions": "file:../../packages/hoppity-subscriptions",
         "@apogeelabs/hoppity-logger": "file:../../packages/hoppity-logger",
-        "rascal": "^15.0.0",
+        "rascal": "^20.1.1",
         "dotenv": "^16.3.1"
     },
     "devDependencies": {
