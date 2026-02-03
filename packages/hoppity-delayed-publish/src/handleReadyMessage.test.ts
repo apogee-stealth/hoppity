@@ -480,4 +480,93 @@ describe("packages > hoppity-delayed-publish > src > handleReadyMessage", () => 
             });
         });
     });
+
+    describe("when custom retryConfig is provided", () => {
+        describe("with custom maxRetries", () => {
+            let thrownError: any;
+
+            beforeEach(async () => {
+                delayedMessage.retryCount = 2;
+                broker.publish.mockRejectedValueOnce(new Error("E_COLD_CALZONE"));
+                const mod = await import("./handleReadyMessage");
+                try {
+                    await mod.handleReadyMessage(broker, delayedMessage, logger, undefined, {
+                        maxRetries: 3,
+                        retryDelay: 1000,
+                    });
+                } catch (err) {
+                    thrownError = err;
+                }
+            });
+
+            it("should use the custom maxRetries in the warning log", () => {
+                expect(logger.warn).toHaveBeenCalledWith(
+                    "[DelayedPublish] Retrying re-publish (attempt 3/3)"
+                );
+            });
+
+            it("should include custom maxRetries in error details", () => {
+                expect(thrownError.details.maxRetries).toBe(3);
+            });
+        });
+
+        describe("with custom maxRetries triggering max retries exceeded", () => {
+            let thrownError: any;
+
+            beforeEach(async () => {
+                delayedMessage.retryCount = 3;
+                broker.publish.mockRejectedValueOnce(new Error("E_COLD_CALZONE"));
+                broker.publish.mockResolvedValueOnce(undefined);
+                const mod = await import("./handleReadyMessage");
+                try {
+                    await mod.handleReadyMessage(broker, delayedMessage, logger, undefined, {
+                        maxRetries: 3,
+                        retryDelay: 1000,
+                    });
+                } catch (err) {
+                    thrownError = err;
+                }
+            });
+
+            it("should send to error queue when custom maxRetries is exceeded", () => {
+                expect(logger.error).toHaveBeenCalledWith(
+                    "[DelayedPublish] Max retries exceeded for delayed message, sending to error queue"
+                );
+            });
+
+            it("should include custom maxRetries in error details", () => {
+                expect(thrownError.details.maxRetries).toBe(3);
+            });
+        });
+
+        describe("with custom retryDelay", () => {
+            beforeEach(async () => {
+                delayedMessage.retryCount = 1;
+                broker.publish.mockRejectedValueOnce(new Error("E_COLD_CALZONE"));
+                const mod = await import("./handleReadyMessage");
+                try {
+                    await mod.handleReadyMessage(broker, delayedMessage, logger, "wait_queue", {
+                        maxRetries: 5,
+                        retryDelay: 2500,
+                    });
+                } catch {
+                    // Expected to throw
+                }
+            });
+
+            it("should use the custom retryDelay as the expiration on retry publish", () => {
+                expect(broker.publish).toHaveBeenNthCalledWith(
+                    2,
+                    "wait_queue",
+                    expect.objectContaining({ retryCount: 2 }),
+                    {
+                        options: {
+                            expiration: 2500,
+                            persistent: false,
+                        },
+                    }
+                );
+            });
+        });
+    });
 });

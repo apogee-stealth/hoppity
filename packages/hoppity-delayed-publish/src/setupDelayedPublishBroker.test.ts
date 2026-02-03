@@ -117,7 +117,8 @@ describe("packages > hoppity-delayed-publish > src > setupDelayedPublishBroker",
                     mockBroker,
                     content,
                     mockLogger,
-                    "TEST_SERVICE_delayed_wait"
+                    "TEST_SERVICE_delayed_wait",
+                    { maxRetries: 5, retryDelay: 1000 }
                 );
             });
 
@@ -416,6 +417,36 @@ describe("packages > hoppity-delayed-publish > src > setupDelayedPublishBroker",
                 // Expected to throw
             }
             expect(mockDelayedPublishError).toHaveBeenCalled();
+        });
+    });
+
+    describe("when custom maxRetries and retryDelay are provided", () => {
+        beforeEach(async () => {
+            options.maxRetries = 10;
+            options.retryDelay = 3000;
+            const mod = await import("./setupDelayedPublishBroker");
+            await mod.setupDelayedPublishBroker(mockBroker, options, mockLogger);
+        });
+
+        it("should pass custom retry config to handleReadyMessage", async () => {
+            const messageHandler = mockSubscription.on.mock.calls.find(
+                (call: any) => call[0] === "message"
+            )[1];
+            const content = {
+                originalMessage: "TEST_MESSAGE",
+                originalPublication: "TEST_PUBLICATION",
+                targetDelay: 5000,
+                createdAt: Date.now(),
+                retryCount: 0,
+            };
+            await messageHandler({}, content, mockAckOrNack);
+            expect(mockHandleReadyMessage).toHaveBeenCalledWith(
+                mockBroker,
+                content,
+                mockLogger,
+                "TEST_SERVICE_delayed_wait",
+                { maxRetries: 10, retryDelay: 3000 }
+            );
         });
     });
 
