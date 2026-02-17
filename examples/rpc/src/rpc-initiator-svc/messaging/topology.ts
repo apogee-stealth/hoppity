@@ -3,13 +3,13 @@ import { config } from "../../shared/config";
 
 /**
  * RPC Initiator topology configuration.
- * This service will make RPC calls to the RPC Handler Service.
+ * Minimal topology — the RPC middleware adds the exchanges/queues it needs.
  */
 export const rpcInitiatorTopology: BrokerConfig = {
     vhosts: {
-        [config.rabbitMQ.vhost]: {
+        [config.rabbitmq.vhost]: {
             connection: {
-                url: config.rabbitMQ.url,
+                url: config.rabbitmq.url,
                 options: {
                     heartbeat: 10,
                 },

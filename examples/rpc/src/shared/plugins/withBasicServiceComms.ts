@@ -30,7 +30,6 @@ export interface BasicServiceCommsOptions {
  * @returns A middleware function that adds the exchanges to the topology
  */
 export const withBasicServiceComms = (options: BasicServiceCommsOptions): MiddlewareFunction => {
-    // Validate required options
     if (
         !options.serviceName ||
         typeof options.serviceName !== "string" ||
@@ -44,19 +43,18 @@ export const withBasicServiceComms = (options: BasicServiceCommsOptions): Middle
     const serviceName = options.serviceName.trim();
     const vhosts = Array.isArray(options.vhost) ? options.vhost : [options.vhost || "/"];
 
-    return (topology: BrokerConfig, _context: MiddlewareContext): MiddlewareResult => {
-        console.log(`🔧 [BasicServiceComms] Applying middleware for service: ${serviceName}`);
+    return (topology: BrokerConfig, context: MiddlewareContext): MiddlewareResult => {
+        context.logger.debug(
+            `[BasicServiceComms] Applying middleware for service: ${serviceName}`
+        );
 
-        // Clone the topology to avoid mutations
         const modifiedTopology = structuredClone(topology);
 
-        // Ensure vhosts exist in topology
         if (!modifiedTopology.vhosts) {
             modifiedTopology.vhosts = {};
         }
 
-        // Add exchanges to each specified vhost
-        vhosts.forEach(vhost => {
+        vhosts.forEach((vhost) => {
             if (!modifiedTopology.vhosts![vhost]) {
                 modifiedTopology.vhosts![vhost] = {};
             }
@@ -67,7 +65,6 @@ export const withBasicServiceComms = (options: BasicServiceCommsOptions): Middle
                 vhostConfig.exchanges = {};
             }
 
-            // Add inbound exchange (topic)
             const inboundExchangeName = `${serviceName}_inbound`;
             (vhostConfig.exchanges as { [key: string]: any })[inboundExchangeName] = {
                 assert: true,
@@ -77,7 +74,6 @@ export const withBasicServiceComms = (options: BasicServiceCommsOptions): Middle
                 },
             };
 
-            // Add outbound exchange (fanout)
             const outboundExchangeName = `${serviceName}_outbound`;
             (vhostConfig.exchanges as { [key: string]: any })[outboundExchangeName] = {
                 assert: true,
@@ -87,7 +83,6 @@ export const withBasicServiceComms = (options: BasicServiceCommsOptions): Middle
                 },
             };
 
-            // Add generic service publication
             const publicationName = `${serviceName}_publication`;
             if (!vhostConfig.publications) {
                 vhostConfig.publications = {};
@@ -96,20 +91,18 @@ export const withBasicServiceComms = (options: BasicServiceCommsOptions): Middle
                 exchange: outboundExchangeName,
             };
 
-            console.log(
-                `🔧 [BasicServiceComms] Added exchanges to vhost '${vhost}': ${inboundExchangeName}, ${outboundExchangeName}`
+            context.logger.debug(
+                `[BasicServiceComms] Added exchanges to vhost '${vhost}': ${inboundExchangeName}, ${outboundExchangeName}`
             );
         });
 
-        // Return the modified topology and a callback to extend the broker
         return {
             topology: modifiedTopology,
             onBrokerCreated: async (broker: BrokerAsPromised) => {
-                console.log(
-                    `🔧 [BasicServiceComms] Extending broker with publishToOutbound method for service: ${serviceName}`
+                context.logger.debug(
+                    `[BasicServiceComms] Extending broker with publishToOutbound for service: ${serviceName}`
                 );
 
-                // Extend the broker with the publishToOutbound method
                 Object.assign(broker, {
                     publishToOutbound: (
                         message: any,
@@ -120,7 +113,9 @@ export const withBasicServiceComms = (options: BasicServiceCommsOptions): Middle
                     },
                 });
 
-                console.log(`✅ [BasicServiceComms] Broker extended with publishToOutbound method`);
+                context.logger.debug(
+                    `[BasicServiceComms] Broker extended with publishToOutbound method`
+                );
             },
         };
     };
