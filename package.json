@@ -37,8 +37,9 @@
     "engines": {
         "node": ">=22"
     },
-    "packageManager": "pnpm@8.7.5",
+    "packageManager": "pnpm@9.15.9",
     "dependencies": {
+        "@apogeelabs/the-agency": "0.3.0",
         "fast-deep-equal": "^3.1.3"
     }
 }
