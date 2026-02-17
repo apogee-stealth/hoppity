@@ -20,6 +20,7 @@ Each package's README has quick-start examples on how to use each library
 
 You can also view the examples for real-world usage:
 
+- [basic-pubsub](./examples/basic-pubsub/README.md)
 - [delayed-publish](./examples/delayed-publish/README.md)
 - [rpc](./examples/rpc/README.md)
 
@@ -47,10 +48,17 @@ You can also view the examples for real-world usage:
 
 ## Example Projects
 
+- [`examples/basic-pubsub`](./examples/basic-pubsub) – Basic pub/sub with core hoppity and subscriptions
 - [`examples/delayed-publish`](./examples/delayed-publish) – Demonstrates delayed publishing and subscriptions
 - [`examples/rpc`](./examples/rpc) – Demonstrates RPC pattern usage
 
 ---
+
+## Prerequisites
+
+- [Node.js](https://nodejs.org/) >= 22 (see `.nvmrc`)
+- [pnpm](https://pnpm.io/) 8.7.5
+- [RabbitMQ](https://www.rabbitmq.com/) — a `docker-compose.yml` is included at the repo root for local development
 
 ## License
 

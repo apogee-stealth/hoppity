@@ -36,8 +36,18 @@
         "test": "jest",
         "test:watch": "jest --watch --collect-coverage",
         "lint": "eslint --config ../../.eslintrc.js 'src/**/*.{ts,tsx}'",
-        "format": "prettier --write \"**/*.{ts,tsx,md}\""
+        "format": "prettier --write \"**/*.{ts,tsx,md}\"",
+        "prepublishOnly": "pnpm build"
     },
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/apogee-stealth/hoppity.git",
+        "directory": "packages/hoppity"
+    },
+    "bugs": {
+        "url": "https://github.com/apogee-stealth/hoppity/issues"
+    },
+    "homepage": "https://github.com/apogee-stealth/hoppity/tree/main/packages/hoppity#readme",
     "keywords": [
         "hoppity",
         "rabbitmq",
@@ -60,6 +70,7 @@
         "typescript": "^5.2.2"
     },
     "dependencies": {
+        "fast-deep-equal": "^3.1.3",
         "rascal": "^20.1.1"
     }
 }

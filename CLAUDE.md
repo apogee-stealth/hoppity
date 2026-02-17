@@ -8,7 +8,7 @@ Pattern-driven RabbitMQ topology for Node.js microservices, built on the Rascal 
 
 ## Monorepo Layout
 
-pnpm workspaces + Turborepo. Five packages under `packages/`, two example apps under `examples/`.
+pnpm workspaces + Turborepo. Five packages under `packages/`, three example apps under `examples/`, and an `integration-tests/` workspace.
 
 - **hoppity** — Core middleware pipeline and builder API
 - **hoppity-rpc** — Request/response RPC with correlation IDs
@@ -23,9 +23,11 @@ All commands run from repo root unless noted.
 ```bash
 pnpm install              # Install all deps
 pnpm build                # Build all packages (turbo-cached)
-pnpm test                 # Run all tests
+pnpm test                 # Run all unit tests
+pnpm test:integration     # Run integration tests (requires Docker)
 pnpm lint                 # ESLint across all packages
 pnpm format               # Prettier across all packages
+pnpm format:check         # Check formatting without writing
 pnpm dev                  # Watch mode for all packages
 ```
 
@@ -70,6 +72,14 @@ Each middleware returns modified topology and an optional `onBrokerCreated` asyn
 
 When generating or modifying unit tests, follow the conventions in `.ai/UnitTestGeneration.md` and examples in `.ai/UnitTestExamples.md`.
 
+## Integration Tests
+
+Integration tests live in `integration-tests/` and use Testcontainers to spin up RabbitMQ automatically. Run with `pnpm test:integration`. Tests run serially with a 60s timeout.
+
+## Docker
+
+A `docker-compose.yml` at the repo root provides RabbitMQ (with management UI) for local development. Each example also has its own identical `docker-compose.yml`.
+
 ## Node Version
 
-Node 22 (see `.nvmrc`). pnpm 8.7.5 (enforced via `packageManager` field).
+Node 22 (see `.nvmrc` for exact version). pnpm 8.7.5 (enforced via `packageManager` field).

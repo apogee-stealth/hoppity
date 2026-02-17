@@ -144,7 +144,8 @@ For RPC communication patterns, see the separate `@apogeelabs/hoppity-rpc` packa
 This package depends on:
 
 - `rascal` - The underlying RabbitMQ library
-- `lodash` - For deep cloning and utility functions
+- `fast-deep-equal` - For deep equality comparison
+- `structuredClone` (built-in) - For deep cloning
 
 ## License
 

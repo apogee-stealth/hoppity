@@ -16,6 +16,6 @@
             "@apogeelabs/*": ["packages/*/src"]
         }
     },
-    "include": ["src/**/*", "packages/*/src/**/*", "packages/*/src/**/*.test.ts", "examples/**/*"],
+    "include": ["src/**/*", "packages/*/src/**/*", "packages/*/src/**/*.test.ts", "examples/**/*", "integration-tests/src/**/*"],
     "exclude": ["node_modules", "dist", ".eslintrc.js", "jest.config.js"]
 }
