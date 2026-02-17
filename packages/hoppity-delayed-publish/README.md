@@ -191,7 +191,7 @@ This package depends on:
 
 - `@apogeelabs/hoppity` - The core hoppity library
 - `rascal` - The underlying RabbitMQ library
-- `lodash` - For utility functions
+- `structuredClone` (built-in) - For deep cloning
 
 ## License
 

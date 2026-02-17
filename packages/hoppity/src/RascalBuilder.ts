@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { cloneDeep, isEqual } from "lodash";
+import isEqual from "fast-deep-equal";
 import { BrokerAsPromised, type BrokerConfig } from "rascal";
 import { defaultLogger } from "./consoleLogger";
 import type {
@@ -52,7 +52,7 @@ export class RascalBuilder implements BuilderInterface {
      */
     constructor(initialTopology: BrokerConfig = {}) {
         // Deep clone to prevent mutations to the original
-        this.topology = cloneDeep(initialTopology);
+        this.topology = structuredClone(initialTopology);
     }
 
     /**
@@ -86,7 +86,13 @@ export class RascalBuilder implements BuilderInterface {
             const broker = await BrokerAsPromised.create(this.topology);
 
             // Phase 3: Execute onBrokerCreated callbacks sequentially (fail-fast)
-            await this.executeCallbacks(broker);
+            // If callbacks fail, shut down the broker to avoid leaking connections.
+            try {
+                await this.executeCallbacks(broker);
+            } catch (callbackError) {
+                await broker.shutdown();
+                throw callbackError;
+            }
 
             return broker;
         } catch (error) {

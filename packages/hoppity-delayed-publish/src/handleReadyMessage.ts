@@ -3,6 +3,11 @@ import type { Logger } from "@apogeelabs/hoppity";
 import { BrokerAsPromised } from "rascal";
 import { type DelayedMessage, DelayedPublishError, DelayedPublishErrorCode } from "./types";
 
+export interface RetryConfig {
+    maxRetries: number;
+    retryDelay: number;
+}
+
 /**
  * Handles a message that has expired (reach the wait threshold) and is ready to be re-published
  *
@@ -21,9 +26,11 @@ export async function handleReadyMessage(
     broker: BrokerAsPromised,
     delayedMessage: DelayedMessage,
     logger?: Logger,
-    waitPublicationName?: string
+    waitPublicationName?: string,
+    retryConfig?: RetryConfig
 ): Promise<void> {
-    const maxRetries = 5; // TODO: make this configurable in the future
+    const maxRetries = retryConfig?.maxRetries ?? 5;
+    const retryDelay = retryConfig?.retryDelay ?? 1000;
     const retryCount = delayedMessage.retryCount || 0;
 
     try {
@@ -62,7 +69,7 @@ export async function handleReadyMessage(
             if (waitPublicationName) {
                 await broker.publish(waitPublicationName, retryMessage, {
                     options: {
-                        expiration: 1000, // 1 second delay before retry
+                        expiration: retryDelay,
                         persistent: false,
                     },
                 });

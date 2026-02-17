@@ -14,6 +14,10 @@ export interface DelayedPublishOptions {
     defaultDelay?: number;
     /** Optional logger instance for delayed publish operations */
     logger?: Logger;
+    /** Max retry attempts when re-publish fails (default: 5) */
+    maxRetries?: number;
+    /** Delay in ms between retry attempts (default: 1000) */
+    retryDelay?: number;
 }
 
 /**

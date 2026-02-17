@@ -1,6 +1,6 @@
 {
     "name": "@apogeelabs/hoppity-delayed-publish",
-    "version": "0.0.0",
+    "version": "0.1.0",
     "description": "Delayed publish functionality for hoppity",
     "author": "Apogee Travel",
     "contributors": [
@@ -27,7 +27,7 @@
         "README.md"
     ],
     "engines": {
-        "node": ">=18"
+        "node": ">=22"
     },
     "sideEffects": false,
     "scripts": {
@@ -36,8 +36,18 @@
         "test": "jest",
         "test:watch": "jest --watch --collect-coverage",
         "lint": "eslint --config ../../.eslintrc.js 'src/**/*.{ts,tsx}'",
-        "format": "prettier --write \"**/*.{ts,tsx,md}\""
+        "format": "prettier --write \"**/*.{ts,tsx,md}\"",
+        "prepublishOnly": "pnpm build"
     },
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/apogee-stealth/hoppity.git",
+        "directory": "packages/hoppity-delayed-publish"
+    },
+    "bugs": {
+        "url": "https://github.com/apogee-stealth/hoppity/issues"
+    },
+    "homepage": "https://github.com/apogee-stealth/hoppity/tree/main/packages/hoppity-delayed-publish#readme",
     "keywords": [
         "hoppity",
         "rabbitmq",
@@ -48,7 +58,6 @@
     ],
     "devDependencies": {
         "@types/jest": "^29.5.5",
-        "@types/lodash": "^4.14.202",
         "@types/rascal": "^10.2.1",
         "eslint": "^8.0.1",
         "eslint-config-standard": "^17.1.0",
@@ -63,7 +72,6 @@
     },
     "dependencies": {
         "@apogeelabs/hoppity": "workspace:*",
-        "lodash": "^4.17.21",
         "rascal": "^20.1.1"
     }
 }

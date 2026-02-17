@@ -2,8 +2,8 @@ import { BrokerConfig } from "rascal";
 import { config } from "../../shared/config";
 
 /**
- * Delayed Processor topology configuration
- * Contains the complete topology configuration for the delayed processor service
+ * Delayed Processor topology configuration.
+ * Includes the queue, binding, and subscription for consuming delayed messages.
  */
 export const delayedProcessorTopology: BrokerConfig = {
     vhosts: {
@@ -12,7 +12,6 @@ export const delayedProcessorTopology: BrokerConfig = {
                 url: `amqp://${config.rabbitmq.user}:${config.rabbitmq.pass}@${config.rabbitmq.host}:${config.rabbitmq.port}/${config.rabbitmq.vhost}`,
             },
             exchanges: {
-                // Main exchange for delayed messages
                 [config.delayed.exchange]: {
                     type: "direct",
                     options: {
@@ -20,8 +19,7 @@ export const delayedProcessorTopology: BrokerConfig = {
                         autoDelete: false,
                     },
                 },
-                // Service B exchange for processing delayed messages
-                [config.service.b.exchangeName]: {
+                [config.processor.exchangeName]: {
                     type: "direct",
                     options: {
                         durable: false,
@@ -30,8 +28,7 @@ export const delayedProcessorTopology: BrokerConfig = {
                 },
             },
             queues: {
-                // Service B queue for processing delayed messages
-                [config.service.b.queueName]: {
+                [config.processor.queueName]: {
                     options: {
                         durable: false,
                         autoDelete: false,
@@ -39,18 +36,16 @@ export const delayedProcessorTopology: BrokerConfig = {
                 },
             },
             bindings: {
-                // Bind Service B queue to its exchange
-                [`${config.service.b.queueName}-binding`]: {
-                    source: config.service.b.exchangeName,
-                    destination: config.service.b.queueName,
+                [`${config.processor.queueName}-binding`]: {
+                    source: config.processor.exchangeName,
+                    destination: config.processor.queueName,
                     destinationType: "queue",
                     bindingKey: "delayed.message",
                 },
             },
             publications: {
-                // Publication for sending messages to Service B
-                [`${config.service.b.exchangeName}-publication`]: {
-                    exchange: config.service.b.exchangeName,
+                [`${config.processor.exchangeName}-publication`]: {
+                    exchange: config.processor.exchangeName,
                     routingKey: "delayed.message",
                     options: {
                         persistent: false,
@@ -58,9 +53,8 @@ export const delayedProcessorTopology: BrokerConfig = {
                 },
             },
             subscriptions: {
-                // Subscription for Service B to consume messages
                 delayedMessageProcessor: {
-                    queue: config.service.b.queueName,
+                    queue: config.processor.queueName,
                 },
             },
         },

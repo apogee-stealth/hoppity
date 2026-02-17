@@ -1,6 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { MiddlewareFunction, MiddlewareResult, MiddlewareContext } from "@apogeelabs/hoppity";
-import { cloneDeep } from "lodash";
 import { BrokerConfig, BrokerAsPromised, PublicationConfig, PublicationSession } from "rascal";
 
 /**
@@ -51,7 +50,7 @@ export const withBasicServiceComms = (options: BasicServiceCommsOptions): Middle
         );
 
         // Clone the topology to avoid mutations
-        const modifiedTopology = cloneDeep(topology);
+        const modifiedTopology = structuredClone(topology);
 
         // Ensure vhosts exist in topology
         if (!modifiedTopology.vhosts) {

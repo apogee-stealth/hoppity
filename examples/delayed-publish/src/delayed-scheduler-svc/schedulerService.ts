@@ -1,14 +1,13 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { BrokerWithExtensions } from "@apogeelabs/hoppity";
+import { DelayedPublishBroker } from "@apogeelabs/hoppity-delayed-publish";
 import { config } from "../shared/config";
 import { getBroker } from "./messaging/broker";
-import { DelayedPublishBroker } from "@apogeelabs/hoppity-delayed-publish";
 
 /**
- * Starts the delayed message publishing loop for the scheduler service
- * This function handles scheduling delayed messages to be sent to the processor service
+ * Starts the delayed message publishing loop.
+ * Returns the interval handle so the caller can clean it up on shutdown.
  */
-export async function startSchedulerService(): Promise<void> {
+export async function startSchedulerService(): Promise<ReturnType<typeof setInterval>> {
     const broker = (await getBroker()) as BrokerWithExtensions<[DelayedPublishBroker]>;
     let messageCounter = 0;
 
@@ -24,9 +23,8 @@ export async function startSchedulerService(): Promise<void> {
         };
 
         try {
-            // Publish message with delay to Service B
             await broker.delayedPublish(
-                `${config.service.b.exchangeName}-publication`,
+                `${config.processor.exchangeName}-publication`,
                 message,
                 undefined,
                 config.delayed.defaultDelay
@@ -40,27 +38,20 @@ export async function startSchedulerService(): Promise<void> {
             console.log(`\t\tContent: ${message.message}`);
             console.log("=".repeat(60) + "\n");
         } catch (error) {
-            console.error("❌ [SchedulerService] Failed to schedule delayed message:", error);
+            console.error("❌ [Scheduler] Failed to schedule delayed message:", error);
         }
     };
 
-    // Publish initial message
     await publishDelayedMessage();
 
-    // Set up interval for publishing delayed messages
     const interval = setInterval(async () => {
         try {
             await publishDelayedMessage();
         } catch (error) {
-            console.error("❌ [SchedulerService] Error in delayed publish loop:", error);
+            console.error("❌ [Scheduler] Error in delayed publish loop:", error);
         }
-    }, config.service.a.interval);
+    }, config.scheduler.interval);
 
-    // Clean up interval on process exit
-    process.on("SIGINT", () => {
-        clearInterval(interval);
-        console.log("🛑 [SchedulerService] Stopped delayed publish loop");
-    });
-
-    console.log("✅ [SchedulerService] Delayed publish loop started successfully");
+    console.log("✅ [Scheduler] Delayed publish loop started");
+    return interval;
 }

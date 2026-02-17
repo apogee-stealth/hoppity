@@ -1,23 +1,19 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { config } from "../shared/config";
 import { getBroker } from "./messaging/broker";
 
 /**
- * Starts the RPC initiator service
- * This function sets up periodic RPC calls to the RPC Handler Service
+ * Starts the RPC initiator service.
+ * Sets up periodic RPC calls to the RPC Handler Service.
+ * Returns the interval handle so the caller can clean it up on shutdown.
  */
-export async function startInitiatorService(): Promise<void> {
+export async function startInitiatorService(): Promise<ReturnType<typeof setInterval>> {
     const broker = await getBroker();
 
-    // Set up periodic RPC calls to RPC Handler Service
     const rpcInterval = setInterval(async () => {
         try {
             const requestId = Date.now();
-            console.log(
-                `📤 [InitiatorService] Making RPC call to RPC Handler Service (request ${requestId})...`
-            );
+            console.log(`📤 [Initiator] RPC call to handler (request ${requestId})...`);
 
-            // Make RPC call to RPC Handler Service
             const response = await broker.request("rpc_handler_svc.process_message", {
                 id: requestId,
                 service: "RPC Initiator",
@@ -25,17 +21,12 @@ export async function startInitiatorService(): Promise<void> {
                 message: `Hello from RPC Initiator at ${new Date().toISOString()}`,
             });
 
-            console.log(
-                `✅ [InitiatorService] RPC response received (request ${requestId}):`,
-                response
-            );
+            console.log(`✅ [Initiator] RPC response (request ${requestId}):`, response);
         } catch (error) {
-            console.error("❌ [InitiatorService] RPC call failed:", error);
+            console.error("❌ [Initiator] RPC call failed:", error);
         }
-    }, config.service.serviceAInterval);
+    }, config.service.rpcCallInterval);
 
-    // Store the interval for cleanup
-    (broker as any).rpcInitiatorRpcInterval = rpcInterval;
-
-    console.log("✅ [InitiatorService] RPC Initiator setup complete");
+    console.log("✅ [Initiator] RPC call loop started");
+    return rpcInterval;
 }

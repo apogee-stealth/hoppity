@@ -1,0 +1,35 @@
+{
+    "name": "hoppity-basic-pubsub-example",
+    "version": "1.0.0",
+    "description": "Basic pub/sub example demonstrating core hoppity with subscriptions",
+    "private": true,
+    "scripts": {
+        "build": "tsc",
+        "start:publisher": "tsx src/publisher/index.ts",
+        "start:subscriber": "tsx src/subscriber/index.ts",
+        "dev": "concurrently \"pnpm start:subscriber\" \"pnpm start:publisher\"",
+        "dev:publisher": "tsx watch src/publisher/index.ts",
+        "dev:subscriber": "tsx watch src/subscriber/index.ts",
+        "dev:both": "concurrently \"pnpm dev:subscriber\" \"pnpm dev:publisher\"",
+        "clean": "rm -rf dist",
+        "lint": "eslint --config ../../.eslintrc.js 'src/**/*.{ts,tsx}'"
+    },
+    "dependencies": {
+        "@apogeelabs/hoppity": "file:../../packages/hoppity",
+        "@apogeelabs/hoppity-subscriptions": "file:../../packages/hoppity-subscriptions",
+        "@apogeelabs/hoppity-logger": "file:../../packages/hoppity-logger",
+        "rascal": "^20.1.1",
+        "dotenv": "^16.3.1"
+    },
+    "devDependencies": {
+        "@types/node": "^20.8.0",
+        "@types/rascal": "^10.2.1",
+        "concurrently": "^8.2.2",
+        "eslint": "^8.0.1",
+        "tsx": "^4.6.0",
+        "typescript": "^5.2.2"
+    },
+    "engines": {
+        "node": ">=22"
+    }
+}

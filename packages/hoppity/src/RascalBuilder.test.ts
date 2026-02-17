@@ -1,6 +1,7 @@
-import { cloneDeep } from "lodash";
-
 /* eslint-disable @typescript-eslint/no-explicit-any */
+
+export default {};
+
 const mockBrokerAsPromised = {
     create: jest.fn(),
 };
@@ -18,7 +19,9 @@ describe("packages > hoppity > src > RascalBuilder", () => {
         jest.clearAllMocks();
         jest.resetModules();
 
-        mockBrokerAsPromised.create.mockReturnValue("BROKER_INSTANCE");
+        mockBrokerAsPromised.create.mockReturnValue({
+            shutdown: jest.fn().mockResolvedValue(undefined),
+        });
 
         topology = {
             vhosts: {
@@ -119,7 +122,7 @@ describe("packages > hoppity > src > RascalBuilder", () => {
 
         beforeEach(() => {
             getModifiedTopology = function () {
-                const clonedTopology = cloneDeep(topology);
+                const clonedTopology = structuredClone(topology);
                 clonedTopology.vhosts["/"].publications.mwPublication = {
                     exchange: "calzoneExchange",
                 };
@@ -127,8 +130,8 @@ describe("packages > hoppity > src > RascalBuilder", () => {
             };
             onBrokerCreated = jest.fn();
             mwFn = jest.fn().mockImplementationOnce((topology: any, context: any) => {
-                passedTopology = cloneDeep(topology);
-                passedContext = cloneDeep(context);
+                passedTopology = structuredClone(topology);
+                passedContext = structuredClone(context);
                 rawContext = context;
                 return {
                     topology: getModifiedTopology(),
@@ -145,7 +148,7 @@ describe("packages > hoppity > src > RascalBuilder", () => {
             });
 
             it("should still create a broker", () => {
-                expect(broker).toEqual("BROKER_INSTANCE");
+                expect(broker).toEqual(mockBrokerAsPromised.create.mock.results[0].value);
                 expect(mockBrokerAsPromised.create).toHaveBeenCalledTimes(1);
                 expect(mockBrokerAsPromised.create).toHaveBeenCalledWith(topology);
             });
@@ -155,7 +158,7 @@ describe("packages > hoppity > src > RascalBuilder", () => {
             describe("and the middleware is not anonymous (has a name set)", () => {
                 beforeEach(async () => {
                     const mod = await import("./RascalBuilder");
-                    instance = new mod.RascalBuilder(cloneDeep(topology));
+                    instance = new mod.RascalBuilder(structuredClone(topology));
                     instance.use(mwFn);
                     broker = await instance.build();
                 });
@@ -172,7 +175,7 @@ describe("packages > hoppity > src > RascalBuilder", () => {
                 it("should create the broker", () => {
                     expect(mockBrokerAsPromised.create).toHaveBeenCalledTimes(1);
                     expect(mockBrokerAsPromised.create).toHaveBeenCalledWith(getModifiedTopology());
-                    expect(broker).toEqual("BROKER_INSTANCE");
+                    expect(broker).toEqual(mockBrokerAsPromised.create.mock.results[0].value);
                 });
 
                 it("should execute the callbacks", () => {
@@ -185,10 +188,10 @@ describe("packages > hoppity > src > RascalBuilder", () => {
             describe("and the middleware is anonymous (has no name set)", () => {
                 beforeEach(async () => {
                     const mod = await import("./RascalBuilder");
-                    instance = new mod.RascalBuilder(cloneDeep(topology));
+                    instance = new mod.RascalBuilder(structuredClone(topology));
                     instance.use(function (topology: any, context: any) {
-                        passedTopology = cloneDeep(topology);
-                        passedContext = cloneDeep(context);
+                        passedTopology = structuredClone(topology);
+                        passedContext = structuredClone(context);
                         rawContext = context;
                         return {
                             topology: getModifiedTopology(),
@@ -205,7 +208,7 @@ describe("packages > hoppity > src > RascalBuilder", () => {
                 it("should create the broker", () => {
                     expect(mockBrokerAsPromised.create).toHaveBeenCalledTimes(1);
                     expect(mockBrokerAsPromised.create).toHaveBeenCalledWith(getModifiedTopology());
-                    expect(broker).toEqual("BROKER_INSTANCE");
+                    expect(broker).toEqual(mockBrokerAsPromised.create.mock.results[0].value);
                 });
             });
         });
@@ -218,7 +221,7 @@ describe("packages > hoppity > src > RascalBuilder", () => {
                         throw new Error("E_NO_EPSTEIN_FILES");
                     });
                     const mod = await import("./RascalBuilder");
-                    instance = new mod.RascalBuilder(cloneDeep(topology));
+                    instance = new mod.RascalBuilder(structuredClone(topology));
                     instance.use(mwFn);
                     try {
                         broker = await instance.build();
@@ -242,7 +245,7 @@ describe("packages > hoppity > src > RascalBuilder", () => {
                         throw "E_NO_EPSTEIN_FILES";
                     });
                     const mod = await import("./RascalBuilder");
-                    instance = new mod.RascalBuilder(cloneDeep(topology));
+                    instance = new mod.RascalBuilder(structuredClone(topology));
                     instance.use(mwFn);
                     try {
                         broker = await instance.build();
@@ -267,7 +270,7 @@ describe("packages > hoppity > src > RascalBuilder", () => {
                         throw new Error("E_NO_BUDGET_CUTS");
                     };
                     const mod = await import("./RascalBuilder");
-                    instance = new mod.RascalBuilder(cloneDeep(topology));
+                    instance = new mod.RascalBuilder(structuredClone(topology));
                     instance.use(errMwFn);
                     try {
                         broker = await instance.build();
@@ -289,7 +292,7 @@ describe("packages > hoppity > src > RascalBuilder", () => {
                         throw "E_NO_BUDGET_CUTS";
                     });
                     const mod = await import("./RascalBuilder");
-                    instance = new mod.RascalBuilder(cloneDeep(topology));
+                    instance = new mod.RascalBuilder(structuredClone(topology));
                     instance.use(errMwFn);
                     try {
                         broker = await instance.build();
@@ -308,6 +311,8 @@ describe("packages > hoppity > src > RascalBuilder", () => {
 
         describe("when the middleware onBrokerCreated callback throws an error", () => {
             describe("and the error is an Error instance", () => {
+                let mockBrokerInstance: any;
+
                 beforeEach(async () => {
                     errMwFn = jest.fn().mockImplementationOnce((topology: any, _context: any) => {
                         return {
@@ -318,8 +323,12 @@ describe("packages > hoppity > src > RascalBuilder", () => {
                         };
                     });
                     const mod = await import("./RascalBuilder");
-                    instance = new mod.RascalBuilder(cloneDeep(topology));
+                    instance = new mod.RascalBuilder(structuredClone(topology));
                     instance.use(errMwFn);
+                    mockBrokerInstance =
+                        mockBrokerAsPromised.create.mock.results[0]?.value ??
+                        mockBrokerAsPromised.create();
+                    mockBrokerInstance.shutdown.mockClear();
                     try {
                         broker = await instance.build();
                     } catch (error) {
@@ -332,9 +341,15 @@ describe("packages > hoppity > src > RascalBuilder", () => {
                         "Broker creation failed. Pipeline executed 1 middleware(s). Original error: Middleware callback 1 failed: E_PALANTIR"
                     );
                 });
+
+                it("should shutdown the broker to avoid leaking connections", () => {
+                    expect(mockBrokerInstance.shutdown).toHaveBeenCalledTimes(1);
+                });
             });
 
             describe("and the error is not an Error instance", () => {
+                let mockBrokerInstance: any;
+
                 beforeEach(async () => {
                     errMwFn = jest.fn().mockImplementationOnce((topology: any, _context: any) => {
                         return {
@@ -345,8 +360,12 @@ describe("packages > hoppity > src > RascalBuilder", () => {
                         };
                     });
                     const mod = await import("./RascalBuilder");
-                    instance = new mod.RascalBuilder(cloneDeep(topology));
+                    instance = new mod.RascalBuilder(structuredClone(topology));
                     instance.use(errMwFn);
+                    mockBrokerInstance =
+                        mockBrokerAsPromised.create.mock.results[0]?.value ??
+                        mockBrokerAsPromised.create();
+                    mockBrokerInstance.shutdown.mockClear();
                     try {
                         broker = await instance.build();
                     } catch (error) {
@@ -358,6 +377,39 @@ describe("packages > hoppity > src > RascalBuilder", () => {
                     expect(errResult.message).toContain(
                         "Broker creation failed. Pipeline executed 1 middleware(s). Original error: Middleware callback 1 failed: E_PALANTIR"
                     );
+                });
+
+                it("should shutdown the broker to avoid leaking connections", () => {
+                    expect(mockBrokerInstance.shutdown).toHaveBeenCalledTimes(1);
+                });
+            });
+
+            describe("and broker.shutdown() also throws", () => {
+                beforeEach(async () => {
+                    mockBrokerAsPromised.create.mockReset();
+                    mockBrokerAsPromised.create.mockReturnValue({
+                        shutdown: jest.fn().mockRejectedValue(new Error("E_SHUTDOWN_FAILED")),
+                    });
+                    errMwFn = jest.fn().mockImplementationOnce((topology: any, _context: any) => {
+                        return {
+                            topology,
+                            onBrokerCreated: jest.fn().mockImplementationOnce(() => {
+                                throw new Error("E_PALANTIR");
+                            }),
+                        };
+                    });
+                    const mod = await import("./RascalBuilder");
+                    instance = new mod.RascalBuilder(structuredClone(topology));
+                    instance.use(errMwFn);
+                    try {
+                        broker = await instance.build();
+                    } catch (error) {
+                        errResult = error;
+                    }
+                });
+
+                it("should propagate the shutdown error", () => {
+                    expect(errResult.message).toContain("E_SHUTDOWN_FAILED");
                 });
             });
         });

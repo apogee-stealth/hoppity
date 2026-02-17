@@ -25,8 +25,9 @@ The monorepo utilizes several tools:
 
 Before you begin, ensure you have the following installed:
 
-- [Node.js](https://nodejs.org/) - version 20 or higher
-- [pnpm](https://pnpm.io/) - version 8.7.5 or higher
+- [Node.js](https://nodejs.org/) - version 22 or higher (see `.nvmrc` for exact version)
+- [pnpm](https://pnpm.io/) - version 8.7.5 (enforced via `packageManager` field)
+- [Docker](https://www.docker.com/) - for running RabbitMQ locally and integration tests
 - [Git](https://git-scm.com/) (LOL, if you don't have this, we have bigger problems)
 
 ## Repository Structure
@@ -34,16 +35,19 @@ Before you begin, ensure you have the following installed:
 The repository is organized as a monorepo with the following structure:
 
 ```
-hoppity-monorepo/
-├── packages/                   # Core packages
+hoppity/
+├── packages/                    # Core packages
 │   ├── hoppity/                 # Main hoppity package
-│   ├── hoppity-delayed-publish/ # Provides a pattern to use a wait/ready queue pair to delay handling of a message
-│   ├── hoppity-logger/          # Allows for a custom logger to be passed on the middleware context (useful for libraries like Winston)
-│   ├── hoppity-rpc/             # Provides RPC topology and behavior(s)
-│   ├── hoppity-subscriptions/   # Enables auto-subscribing by matching topology subscriptions with named handlers
-├── examples/                   # Example applications
-│   ├── delayed-publish/         # demonstrates the hoppity-delayed-publish and hoppity-subscriptions middleware
-│   ├── rpc/                     # demonstrates the hoppity-rpc middleware
+│   ├── hoppity-delayed-publish/ # Wait/ready queue pair for delayed message handling
+│   ├── hoppity-logger/          # Custom logger injection (Winston, Pino, etc.)
+│   ├── hoppity-rpc/             # RPC topology and behavior(s)
+│   └── hoppity-subscriptions/   # Auto-subscribing by matching subscriptions with named handlers
+├── examples/                    # Example applications
+│   ├── basic-pubsub/            # Basic pub/sub with core hoppity and subscriptions
+│   ├── delayed-publish/         # Delayed publishing and subscriptions
+│   └── rpc/                     # RPC pattern usage
+├── integration-tests/           # Integration tests (Testcontainers + RabbitMQ)
+└── docker-compose.yml           # RabbitMQ for local development
 ```
 
 ## Setup
@@ -126,9 +130,21 @@ pnpm format
 
 ## Working with Examples
 
-The monorepo includes example applications that demonstrate usage of the Hoppity packages:
+Each example has its own `docker-compose.yml` for spinning up RabbitMQ (or you can use the one at the repo root). See individual example READMEs for setup instructions:
 
-TBD
+- [basic-pubsub](./examples/basic-pubsub/README.md) — Basic pub/sub with core hoppity and subscriptions
+- [delayed-publish](./examples/delayed-publish/README.md) — Delayed publishing and subscriptions
+- [rpc](./examples/rpc/README.md) — RPC pattern usage
+
+## Integration Tests
+
+Integration tests live in `integration-tests/` and use [Testcontainers](https://testcontainers.com/) to spin up a RabbitMQ container automatically — no manual Docker setup required.
+
+```bash
+pnpm test:integration
+```
+
+Tests run serially (max workers: 1) with a 60-second timeout. The Testcontainers setup handles container lifecycle via global setup/teardown hooks.
 
 ## Versioning and Publishing
 
@@ -241,7 +257,9 @@ For local dependencies between packages in the monorepo, use the `workspace:*` o
 
 ## Additional Resources
 
-- [MobX Documentation](https://mobx.js.org/)
+- [Rascal Documentation](https://github.com/guidesmiths/rascal)
+- [RabbitMQ](https://www.rabbitmq.com/)
 - [pnpm Workspace Documentation](https://pnpm.io/workspaces)
 - [Turborepo Documentation](https://turbo.build/repo/docs)
 - [Changesets Documentation](https://github.com/changesets/changesets/blob/main/docs/intro-to-using-changesets.md)
+- [Testcontainers for Node.js](https://node.testcontainers.org/)

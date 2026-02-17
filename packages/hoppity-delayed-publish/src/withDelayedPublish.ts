@@ -1,6 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import type { MiddlewareContext, MiddlewareFunction, MiddlewareResult } from "@apogeelabs/hoppity";
-import { cloneDeep } from "lodash";
 import type { BrokerConfig } from "rascal";
 import { setupDelayedPublishBroker } from "./setupDelayedPublishBroker";
 import type { DelayedPublishOptions } from "./types";
@@ -62,7 +61,7 @@ export const withDelayedPublish = (options: DelayedPublishOptions): MiddlewareFu
         };
 
         // Clone the topology to avoid mutations
-        const modifiedTopology = cloneDeep(topology);
+        const modifiedTopology = structuredClone(topology);
 
         // Ensure vhosts exist in topology
         if (!modifiedTopology.vhosts) {
