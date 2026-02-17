@@ -26,7 +26,7 @@ The monorepo utilizes several tools:
 Before you begin, ensure you have the following installed:
 
 - [Node.js](https://nodejs.org/) - version 22 or higher (see `.nvmrc` for exact version)
-- [pnpm](https://pnpm.io/) - version 8.7.5 (enforced via `packageManager` field)
+- [pnpm](https://pnpm.io/) - version 9.15.9 (enforced via `packageManager` field)
 - [Docker](https://www.docker.com/) - for running RabbitMQ locally and integration tests
 - [Git](https://git-scm.com/) (LOL, if you don't have this, we have bigger problems)
 

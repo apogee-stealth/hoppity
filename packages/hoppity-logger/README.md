@@ -145,8 +145,8 @@ The `withCustomLogger` middleware should typically be applied early in the middl
 ```typescript
 const broker = await hoppity
     .use(withCustomLogger({ logger: customLogger })) // Apply early
-    .use(withBasicServiceComms({ serviceName: "my-service" }))
-    .use(withRpcSupport({ serviceName: "my-service" }))
+    .use(withDelayedPublish({ serviceName: "my-service", instanceId: "instance-1" }))
+    .use(withRpcSupport({ serviceName: "my-service", instanceId: "instance-1", rpcExchange: "rpc" }))
     .build();
 ```
 

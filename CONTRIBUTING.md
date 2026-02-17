@@ -32,7 +32,7 @@ Thank you for your interest in contributing to Hoppity! This document provides g
 ### Testing
 
 - Run tests: `pnpm test`
-- Run tests in watch mode: `pnpm test:watch`
+- Run tests in watch mode for a package: `cd packages/hoppity && pnpm test:watch`
 - Run tests for a specific package: `cd packages/hoppity && pnpm test`
 
 ### Building
