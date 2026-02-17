@@ -57,7 +57,7 @@ You can also view the examples for real-world usage:
 ## Prerequisites
 
 - [Node.js](https://nodejs.org/) >= 22 (see `.nvmrc`)
-- [pnpm](https://pnpm.io/) 8.7.5
+- [pnpm](https://pnpm.io/) 9.15.9
 - [RabbitMQ](https://www.rabbitmq.com/) — a `docker-compose.yml` is included at the repo root for local development
 
 ## License

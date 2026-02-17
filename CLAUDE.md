@@ -82,4 +82,4 @@ A `docker-compose.yml` at the repo root provides RabbitMQ (with management UI) f
 
 ## Node Version
 
-Node 22 (see `.nvmrc` for exact version). pnpm 8.7.5 (enforced via `packageManager` field).
+Node 22 (see `.nvmrc` for exact version). pnpm 9.15.9 (enforced via `packageManager` field).
