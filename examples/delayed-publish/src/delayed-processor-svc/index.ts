@@ -2,36 +2,30 @@ import { config } from "../shared/config";
 import { getBroker } from "./messaging/broker";
 
 /**
- * Delayed Processor Service - Delayed Message Processor
+ * Delayed Processor Service
  *
- * This service demonstrates processing delayed messages from Delayed Scheduler Service:
- * 1. Consumes delayed messages that were scheduled by Delayed Scheduler Service
- * 2. Processes them with different scenarios (regular vs long delayed)
- * 3. Sends notifications back to Delayed Scheduler Service about processing results
+ * Demonstrates consuming delayed messages:
+ * 1. Receives messages that were scheduled by the Delayed Scheduler Service
+ * 2. Processes them via subscription handlers wired up with hoppity-subscriptions
+ * 3. Custom logger injection via hoppity-logger
  */
 async function main() {
-    console.log("🚀 [Delayed Processor] Starting delayed message processor...");
+    console.log("🚀 [Delayed Processor] Starting...");
     console.log("📋 [Delayed Processor] Configuration:", {
-        rabbitmq: config.rabbitmq,
-        service: config.service,
-        delayed: config.delayed,
+        rabbitmq: config.rabbitmq.host,
+        processorQueue: config.processor.queueName,
+        defaultDelay: config.delayed.defaultDelay,
     });
 
     try {
-        // Get the broker instance using the singleton factory
         const broker = await getBroker();
+        console.log("✅ [Delayed Processor] Broker created successfully");
 
-        console.log(
-            "✅ [Delayed Processor] Broker created successfully with delayed publish support"
-        );
-
-        // Handle graceful shutdown
         const shutdown = async (signal: string) => {
-            console.log(`\n🛑 [Delayed Processor] Received ${signal}, shutting down gracefully...`);
-
+            console.log(`\n🛑 [Delayed Processor] Received ${signal}, shutting down...`);
             try {
                 await broker.shutdown();
-                console.log("✅ [Delayed Processor] Broker shutdown completed");
+                console.log("✅ [Delayed Processor] Shutdown complete");
                 process.exit(0);
             } catch (error) {
                 console.error("❌ [Delayed Processor] Error during shutdown:", error);
@@ -42,24 +36,11 @@ async function main() {
         process.on("SIGINT", () => shutdown("SIGINT"));
         process.on("SIGTERM", () => shutdown("SIGTERM"));
 
-        console.log(
-            "🎯 [Delayed Processor] Service is running and ready to process delayed messages..."
-        );
-        console.log(
-            "📊 [Delayed Processor] Check RabbitMQ Management UI at http://localhost:15672"
-        );
-        console.log(
-            "⏰ [Delayed Processor] Waiting for delayed messages from Delayed Scheduler Service..."
-        );
-        console.log("📨 [Delayed Processor] Press Ctrl+C to stop the service");
+        console.log("✅ [Delayed Processor] Running. Waiting for delayed messages. Press Ctrl+C to stop");
     } catch (error) {
-        console.error("❌ [Delayed Processor] Failed to start service:", error);
+        console.error("❌ [Delayed Processor] Failed to start:", error);
         process.exit(1);
     }
 }
 
-// Start the service
-main().catch(error => {
-    console.error("❌ [Delayed Processor] Unhandled error:", error);
-    process.exit(1);
-});
+main();
