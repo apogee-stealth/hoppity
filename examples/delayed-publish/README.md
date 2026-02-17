@@ -80,32 +80,32 @@ src/
 
 ## Configuration
 
-| Variable                 | Default                    | Description                      |
-| ------------------------ | -------------------------- | -------------------------------- |
-| `RABBITMQ_HOST`          | `localhost`                | RabbitMQ host                    |
-| `RABBITMQ_PORT`          | `5672`                     | RabbitMQ port                    |
-| `RABBITMQ_USER`          | `guest`                    | RabbitMQ username                |
-| `RABBITMQ_PASS`          | `guest`                    | RabbitMQ password                |
-| `RABBITMQ_VHOST`         | `/`                        | RabbitMQ virtual host            |
-| `SCHEDULER_INTERVAL`     | `3000`                     | Message scheduling interval (ms) |
-| `PROCESSOR_QUEUE_NAME`   | `delayed-example-queue`    | Processor queue name             |
-| `PROCESSOR_EXCHANGE_NAME`| `delayed-example-exchange` | Processor exchange name          |
-| `DELAYED_EXCHANGE`       | `delayed-exchange`         | Delayed exchange name            |
-| `DEFAULT_DELAY`          | `5000`                     | Default delay in milliseconds    |
-| `MAX_DELAY`              | `30000`                    | Maximum delay in milliseconds    |
+| Variable                  | Default                    | Description                      |
+| ------------------------- | -------------------------- | -------------------------------- |
+| `RABBITMQ_HOST`           | `localhost`                | RabbitMQ host                    |
+| `RABBITMQ_PORT`           | `5672`                     | RabbitMQ port                    |
+| `RABBITMQ_USER`           | `guest`                    | RabbitMQ username                |
+| `RABBITMQ_PASS`           | `guest`                    | RabbitMQ password                |
+| `RABBITMQ_VHOST`          | `/`                        | RabbitMQ virtual host            |
+| `SCHEDULER_INTERVAL`      | `3000`                     | Message scheduling interval (ms) |
+| `PROCESSOR_QUEUE_NAME`    | `delayed-example-queue`    | Processor queue name             |
+| `PROCESSOR_EXCHANGE_NAME` | `delayed-example-exchange` | Processor exchange name          |
+| `DELAYED_EXCHANGE`        | `delayed-exchange`         | Delayed exchange name            |
+| `DEFAULT_DELAY`           | `5000`                     | Default delay in milliseconds    |
+| `MAX_DELAY`               | `30000`                    | Maximum delay in milliseconds    |
 
 ## Available Scripts
 
-| Script                             | Description                                        |
-| ---------------------------------- | -------------------------------------------------- |
-| `pnpm start:delayed-scheduler-svc` | Start scheduler with tsx                           |
-| `pnpm start:delayed-processor-svc` | Start processor with tsx                           |
-| `pnpm dev`                         | Start both services with tsx                       |
-| `pnpm dev:delayed-scheduler-svc`   | Start scheduler with hot reloading                 |
-| `pnpm dev:delayed-processor-svc`   | Start processor with hot reloading                 |
-| `pnpm dev:both`                    | Start both services with hot reloading             |
-| `pnpm build`                       | Build TypeScript                                   |
-| `pnpm clean`                       | Clean build artifacts                              |
+| Script                             | Description                            |
+| ---------------------------------- | -------------------------------------- |
+| `pnpm start:delayed-scheduler-svc` | Start scheduler with tsx               |
+| `pnpm start:delayed-processor-svc` | Start processor with tsx               |
+| `pnpm dev`                         | Start both services with tsx           |
+| `pnpm dev:delayed-scheduler-svc`   | Start scheduler with hot reloading     |
+| `pnpm dev:delayed-processor-svc`   | Start processor with hot reloading     |
+| `pnpm dev:both`                    | Start both services with hot reloading |
+| `pnpm build`                       | Build TypeScript                       |
+| `pnpm clean`                       | Clean build artifacts                  |
 
 ## RabbitMQ Management
 

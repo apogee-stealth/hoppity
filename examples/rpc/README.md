@@ -82,16 +82,16 @@ src/
 
 ## Available Scripts
 
-| Script                         | Description                                    |
-| ------------------------------ | ---------------------------------------------- |
-| `pnpm start:rpc-initiator-svc` | Start initiator with tsx                       |
-| `pnpm start:rpc-handler-svc`   | Start handler with tsx                         |
-| `pnpm dev`                     | Start both services with tsx                   |
-| `pnpm dev:rpc-initiator-svc`   | Start initiator with hot reloading             |
-| `pnpm dev:rpc-handler-svc`     | Start handler with hot reloading               |
-| `pnpm dev:both`                | Start both services with hot reloading         |
-| `pnpm build`                   | Build TypeScript                               |
-| `pnpm clean`                   | Clean build artifacts                          |
+| Script                         | Description                            |
+| ------------------------------ | -------------------------------------- |
+| `pnpm start:rpc-initiator-svc` | Start initiator with tsx               |
+| `pnpm start:rpc-handler-svc`   | Start handler with tsx                 |
+| `pnpm dev`                     | Start both services with tsx           |
+| `pnpm dev:rpc-initiator-svc`   | Start initiator with hot reloading     |
+| `pnpm dev:rpc-handler-svc`     | Start handler with hot reloading       |
+| `pnpm dev:both`                | Start both services with hot reloading |
+| `pnpm build`                   | Build TypeScript                       |
+| `pnpm clean`                   | Clean build artifacts                  |
 
 ## RabbitMQ Management
 

@@ -7,7 +7,7 @@ import { getBroker } from "./messaging/broker";
 export async function startHandlerService(): Promise<void> {
     const broker = await getBroker();
 
-    broker.addRpcListener("rpc_handler_svc.process_message", async (request) => {
+    broker.addRpcListener("rpc_handler_svc.process_message", async request => {
         console.log("📥 [Handler] Received RPC request:", {
             id: request.id,
             service: request.service,
@@ -17,7 +17,7 @@ export async function startHandlerService(): Promise<void> {
         });
 
         // Simulate some processing time
-        await new Promise((resolve) => setTimeout(resolve, 100));
+        await new Promise(resolve => setTimeout(resolve, 100));
 
         const response = {
             processed: true,

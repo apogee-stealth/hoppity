@@ -36,7 +36,9 @@ async function main() {
         process.on("SIGINT", () => shutdown("SIGINT"));
         process.on("SIGTERM", () => shutdown("SIGTERM"));
 
-        console.log("✅ [Delayed Processor] Running. Waiting for delayed messages. Press Ctrl+C to stop");
+        console.log(
+            "✅ [Delayed Processor] Running. Waiting for delayed messages. Press Ctrl+C to stop"
+        );
     } catch (error) {
         console.error("❌ [Delayed Processor] Failed to start:", error);
         process.exit(1);

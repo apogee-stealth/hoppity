@@ -44,9 +44,7 @@ export const withBasicServiceComms = (options: BasicServiceCommsOptions): Middle
     const vhosts = Array.isArray(options.vhost) ? options.vhost : [options.vhost || "/"];
 
     return (topology: BrokerConfig, context: MiddlewareContext): MiddlewareResult => {
-        context.logger.debug(
-            `[BasicServiceComms] Applying middleware for service: ${serviceName}`
-        );
+        context.logger.debug(`[BasicServiceComms] Applying middleware for service: ${serviceName}`);
 
         const modifiedTopology = structuredClone(topology);
 
@@ -54,7 +52,7 @@ export const withBasicServiceComms = (options: BasicServiceCommsOptions): Middle
             modifiedTopology.vhosts = {};
         }
 
-        vhosts.forEach((vhost) => {
+        vhosts.forEach(vhost => {
             if (!modifiedTopology.vhosts![vhost]) {
                 modifiedTopology.vhosts![vhost] = {};
             }

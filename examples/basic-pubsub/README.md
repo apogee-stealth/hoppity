@@ -69,27 +69,27 @@ src/
 
 ## Configuration
 
-| Variable           | Default     | Description               |
-| ------------------ | ----------- | ------------------------- |
-| `RABBITMQ_HOST`    | `localhost` | RabbitMQ host             |
-| `RABBITMQ_PORT`    | `5672`      | RabbitMQ port             |
-| `RABBITMQ_USER`    | `guest`     | RabbitMQ username         |
-| `RABBITMQ_PASS`    | `guest`     | RabbitMQ password         |
-| `RABBITMQ_VHOST`   | `/`         | RabbitMQ virtual host     |
-| `PUBLISH_INTERVAL` | `3000`      | Publish interval (ms)     |
+| Variable           | Default     | Description           |
+| ------------------ | ----------- | --------------------- |
+| `RABBITMQ_HOST`    | `localhost` | RabbitMQ host         |
+| `RABBITMQ_PORT`    | `5672`      | RabbitMQ port         |
+| `RABBITMQ_USER`    | `guest`     | RabbitMQ username     |
+| `RABBITMQ_PASS`    | `guest`     | RabbitMQ password     |
+| `RABBITMQ_VHOST`   | `/`         | RabbitMQ virtual host |
+| `PUBLISH_INTERVAL` | `3000`      | Publish interval (ms) |
 
 ## Available Scripts
 
-| Script                | Description                               |
-| --------------------- | ----------------------------------------- |
-| `pnpm start:publisher`| Start publisher with tsx                  |
-| `pnpm start:subscriber`| Start subscriber with tsx                |
-| `pnpm dev`            | Start both services with tsx              |
-| `pnpm dev:publisher`  | Start publisher with hot reloading        |
-| `pnpm dev:subscriber` | Start subscriber with hot reloading       |
-| `pnpm dev:both`       | Start both services with hot reloading    |
-| `pnpm build`          | Build TypeScript                          |
-| `pnpm clean`          | Clean build artifacts                     |
+| Script                  | Description                            |
+| ----------------------- | -------------------------------------- |
+| `pnpm start:publisher`  | Start publisher with tsx               |
+| `pnpm start:subscriber` | Start subscriber with tsx              |
+| `pnpm dev`              | Start both services with tsx           |
+| `pnpm dev:publisher`    | Start publisher with hot reloading     |
+| `pnpm dev:subscriber`   | Start subscriber with hot reloading    |
+| `pnpm dev:both`         | Start both services with hot reloading |
+| `pnpm build`            | Build TypeScript                       |
+| `pnpm clean`            | Clean build artifacts                  |
 
 ## RabbitMQ Management
 

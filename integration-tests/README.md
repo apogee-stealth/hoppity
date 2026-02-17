@@ -28,13 +28,13 @@ pnpm --filter @apogeelabs/integration-tests test:integration
 
 ## Test Suites
 
-| Suite | What it covers |
-|-------|---------------|
-| `core` | Core hoppity topology builder and middleware pipeline |
-| `rpc` | RPC request/response with correlation IDs |
-| `delayed-publish` | TTL-based delayed message handling |
-| `subscriptions` | Auto-wiring subscription handlers |
-| `combined` | Multiple middleware composed together |
+| Suite             | What it covers                                        |
+| ----------------- | ----------------------------------------------------- |
+| `core`            | Core hoppity topology builder and middleware pipeline |
+| `rpc`             | RPC request/response with correlation IDs             |
+| `delayed-publish` | TTL-based delayed message handling                    |
+| `subscriptions`   | Auto-wiring subscription handlers                     |
+| `combined`        | Multiple middleware composed together                 |
 
 ## Helpers
 

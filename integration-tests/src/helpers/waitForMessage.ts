@@ -22,7 +22,7 @@ export async function waitForMessage<T = unknown>(
             ackOrNack();
             resolve(content as T);
         });
-        subscription.on("error", (err) => {
+        subscription.on("error", err => {
             clearTimeout(timer);
             reject(err);
         });

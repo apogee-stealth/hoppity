@@ -136,10 +136,9 @@ describe("rpc: request/response round-trip", () => {
                 )
                 .build()) as RpcBroker;
 
-            handlerBroker.addRpcListener(
-                "RPC_NOTFOUND_SVC.existingMethod",
-                async () => ({ found: true })
-            );
+            handlerBroker.addRpcListener("RPC_NOTFOUND_SVC.existingMethod", async () => ({
+                found: true,
+            }));
 
             await new Promise(r => setTimeout(r, 500));
 
