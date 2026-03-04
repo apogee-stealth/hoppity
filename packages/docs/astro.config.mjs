@@ -21,13 +21,13 @@ export default defineConfig({
             },
             description:
                 "Pattern-driven RabbitMQ topology builder for Node.js microservices, built on Rascal.",
-            favicon: "/favicon.svg",
+            favicon: "/hoppity/favicon.svg",
             head: [
                 {
                     tag: "link",
                     attrs: {
                         rel: "icon",
-                        href: "/favicon.ico",
+                        href: "/hoppity/favicon.ico",
                         sizes: "32x32",
                     },
                 },
@@ -35,7 +35,7 @@ export default defineConfig({
                     tag: "link",
                     attrs: {
                         rel: "icon",
-                        href: "/favicon-16x16.png",
+                        href: "/hoppity/favicon-16x16.png",
                         sizes: "16x16",
                         type: "image/png",
                     },
@@ -44,21 +44,21 @@ export default defineConfig({
                     tag: "link",
                     attrs: {
                         rel: "apple-touch-icon",
-                        href: "/apple-touch-icon.png",
+                        href: "/hoppity/apple-touch-icon.png",
                     },
                 },
                 {
                     tag: "link",
                     attrs: {
                         rel: "manifest",
-                        href: "/site.webmanifest",
+                        href: "/hoppity/site.webmanifest",
                     },
                 },
                 {
                     tag: "meta",
                     attrs: {
                         property: "og:image",
-                        content: "/og-image.png",
+                        content: "/hoppity/og-image.png",
                     },
                 },
             ],
