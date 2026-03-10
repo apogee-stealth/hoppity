@@ -1,0 +1,35 @@
+---
+editUrl: false
+next: false
+prev: false
+title: "onCommand"
+---
+
+> **onCommand**\<`TSchema`\>(`contract`, `handler`): [`CommandHandlerDeclaration`](/hoppity/api-operations/interfaces/commandhandlerdeclaration/)
+
+Defined in: [packages/hoppity-operations/src/handlers.ts:36](https://github.com/apogee-travel/hoppity/blob/44686f847069af050019409a7fbac4f4a8c27beb/packages/hoppity-operations/src/handlers.ts#L36)
+
+Declares a typed command handler for use in withOperations middleware config.
+
+Same type-inference behavior as onEvent — the contract's schema drives the
+handler's content type.
+
+## Type Parameters
+
+### TSchema
+
+`TSchema` _extends_ `ZodTypeAny`
+
+## Parameters
+
+### contract
+
+`CommandContract`\<`any`, `any`, `TSchema`\>
+
+### handler
+
+[`CommandHandler`](/hoppity/api-operations/type-aliases/commandhandler/)\<`TSchema`\>
+
+## Returns
+
+[`CommandHandlerDeclaration`](/hoppity/api-operations/interfaces/commandhandlerdeclaration/)

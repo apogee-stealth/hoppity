@@ -1,7 +1,17 @@
 import { defineConfig } from "astro/config";
 import starlight from "@astrojs/starlight";
-import starlightTypeDoc, { typeDocSidebarGroup } from "starlight-typedoc";
+import starlightTypeDoc, {
+    typeDocSidebarGroup,
+    createStarlightTypeDocPlugin,
+} from "starlight-typedoc";
 import starlightThemeNova from "starlight-theme-nova";
+
+const [rpcTypeDoc, rpcSidebarGroup] = createStarlightTypeDocPlugin();
+const [delayedTypeDoc, delayedSidebarGroup] = createStarlightTypeDocPlugin();
+const [subscriptionsTypeDoc, subscriptionsSidebarGroup] = createStarlightTypeDocPlugin();
+const [loggerTypeDoc, loggerSidebarGroup] = createStarlightTypeDocPlugin();
+const [contractsTypeDoc, contractsSidebarGroup] = createStarlightTypeDocPlugin();
+const [operationsTypeDoc, operationsSidebarGroup] = createStarlightTypeDocPlugin();
 
 export default defineConfig({
     site: "https://apogee-travel.github.io",
@@ -68,6 +78,43 @@ export default defineConfig({
                 starlightTypeDoc({
                     entryPoints: ["../hoppity/src/index.ts"],
                     tsconfig: "../hoppity/tsconfig.json",
+                    sidebar: { label: "Core API" },
+                }),
+                rpcTypeDoc({
+                    entryPoints: ["../hoppity-rpc/src/index.ts"],
+                    tsconfig: "../hoppity-rpc/tsconfig.json",
+                    output: "api-rpc",
+                    sidebar: { label: "API Reference", collapsed: true },
+                }),
+                delayedTypeDoc({
+                    entryPoints: ["../hoppity-delayed-publish/src/index.ts"],
+                    tsconfig: "../hoppity-delayed-publish/tsconfig.json",
+                    output: "api-delayed-publish",
+                    sidebar: { label: "API Reference", collapsed: true },
+                }),
+                subscriptionsTypeDoc({
+                    entryPoints: ["../hoppity-subscriptions/src/index.ts"],
+                    tsconfig: "../hoppity-subscriptions/tsconfig.json",
+                    output: "api-subscriptions",
+                    sidebar: { label: "API Reference", collapsed: true },
+                }),
+                loggerTypeDoc({
+                    entryPoints: ["../hoppity-logger/src/index.ts"],
+                    tsconfig: "../hoppity-logger/tsconfig.json",
+                    output: "api-logger",
+                    sidebar: { label: "API Reference", collapsed: true },
+                }),
+                contractsTypeDoc({
+                    entryPoints: ["../hoppity-contracts/src/index.ts"],
+                    tsconfig: "../hoppity-contracts/tsconfig.json",
+                    output: "api-contracts",
+                    sidebar: { label: "API Reference", collapsed: true },
+                }),
+                operationsTypeDoc({
+                    entryPoints: ["../hoppity-operations/src/index.ts"],
+                    tsconfig: "../hoppity-operations/tsconfig.json",
+                    output: "api-operations",
+                    sidebar: { label: "API Reference", collapsed: true },
                 }),
             ],
             social: [
@@ -89,10 +136,49 @@ export default defineConfig({
                         { slug: "guide/introduction" },
                         { slug: "guide/getting-started" },
                         { slug: "guide/concepts" },
-                        { slug: "guide/examples" },
                     ],
                 },
                 typeDocSidebarGroup,
+                {
+                    label: "hoppity-rpc",
+                    collapsed: true,
+                    items: [{ slug: "packages/hoppity-rpc" }, rpcSidebarGroup],
+                },
+                {
+                    label: "hoppity-delayed-publish",
+                    collapsed: true,
+                    items: [{ slug: "packages/hoppity-delayed-publish" }, delayedSidebarGroup],
+                },
+                {
+                    label: "hoppity-subscriptions",
+                    collapsed: true,
+                    items: [{ slug: "packages/hoppity-subscriptions" }, subscriptionsSidebarGroup],
+                },
+                {
+                    label: "hoppity-logger",
+                    collapsed: true,
+                    items: [{ slug: "packages/hoppity-logger" }, loggerSidebarGroup],
+                },
+                {
+                    label: "hoppity-contracts",
+                    collapsed: true,
+                    items: [{ slug: "packages/hoppity-contracts" }, contractsSidebarGroup],
+                },
+                {
+                    label: "hoppity-operations",
+                    collapsed: true,
+                    items: [{ slug: "packages/hoppity-operations" }, operationsSidebarGroup],
+                },
+                {
+                    label: "Examples",
+                    items: [
+                        { slug: "examples/overview" },
+                        { slug: "examples/basic-pubsub" },
+                        { slug: "examples/delayed-publish" },
+                        { slug: "examples/rpc" },
+                        { slug: "examples/bookstore" },
+                    ],
+                },
             ],
         }),
     ],

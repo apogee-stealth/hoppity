@@ -1,8 +1,6 @@
 <p>
-  <img src="./hoppity-logo-1.png" alt="Hoppity Logo" width="78" />
+  <img src="./packages/docs/src/assets/hero-dark.svg" alt="Hoppity Logo" width="240" />
 </p>
-
-# Hoppity
 
 **Consistent, pattern-driven RabbitMQ topology and broker configuration for Node.js microservices.**
 

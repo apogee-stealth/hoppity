@@ -1,0 +1,35 @@
+---
+title: Basic Pub/Sub
+description: The simplest hoppity example — publisher and subscriber with a topic exchange.
+---
+
+**Location:** `examples/basic-pubsub`
+
+The simplest hoppity example. One publisher sends messages to a topic exchange, one subscriber consumes them from a queue.
+
+## Middleware Used
+
+- `withCustomLogger` — custom logger injection
+- `withSubscriptions` — auto-wired subscription handlers
+
+## Key Concepts
+
+- **Separate topologies** — Each service declares only the exchanges, queues, bindings, publications, and subscriptions it needs. The publisher topology defines a publication; the subscriber topology defines a subscription and queue.
+- **Subscription name mapping** — The key you pass to `withSubscriptions()` (e.g., `on_event`) must match a subscription name in the Rascal topology.
+- **Middleware ordering** — `withCustomLogger` goes first so the custom logger is available to `withSubscriptions` and the builder itself. `withSubscriptions` goes last, after the topology is finalized.
+
+## Running It
+
+```bash
+cd examples/basic-pubsub
+pnpm dev:both
+```
+
+This starts both the publisher and subscriber. The publisher sends a message every few seconds; the subscriber logs each received message.
+
+## What to Look For
+
+- The publisher creates a broker with just a publication — no queues or subscriptions
+- The subscriber creates a broker with a queue, binding, and subscription
+- Both services use `withCustomLogger` for structured logging
+- `withSubscriptions` validates that every handler key matches a real subscription in the topology before the broker starts
