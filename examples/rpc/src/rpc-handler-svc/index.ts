@@ -3,13 +3,15 @@ import { getBroker } from "./messaging/broker";
 import { startHandlerService } from "./handlerService";
 
 /**
- * RPC Handler Service
+ * RPC Handler Service — entry point.
  *
- * Demonstrates:
- * 1. Using hoppity with a base topology
- * 2. Applying RPC middleware for service-to-service communication
- * 3. Setting up RPC handlers to process requests
- * 4. Custom logger injection via hoppity-logger
+ * This is the "server" side of the RPC pattern. It:
+ * 1. Creates a broker with RPC infrastructure via `withRpcSupport`
+ * 2. Registers an RPC listener that processes incoming requests
+ * 3. Automatically sends responses back to the initiator's reply queue
+ *
+ * The handler doesn't need to know where replies go — the RPC middleware
+ * handles correlation IDs and reply routing transparently.
  */
 async function main() {
     console.log("📥 [RPC Handler] Starting...");
@@ -24,6 +26,8 @@ async function main() {
 
         await startHandlerService();
 
+        // Graceful shutdown: close the AMQP connection cleanly so RabbitMQ
+        // can remove the exclusive/auto-delete queues immediately.
         const shutdown = async () => {
             console.log("🛑 [RPC Handler] Shutting down...");
             try {

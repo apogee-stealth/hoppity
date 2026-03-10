@@ -8,13 +8,14 @@ The simplest hoppity example — a publisher sends messages to an exchange, a su
 - `withCustomLogger()` — injecting a custom logger via `hoppity-logger`
 - `withSubscriptions()` — auto-wiring subscription handlers via `hoppity-subscriptions`
 - Rascal topology configuration (exchanges, queues, bindings, publications, subscriptions)
-- Graceful shutdown
+- Separate publisher/subscriber topologies — each service declares only what it needs
+- Graceful shutdown with `broker.shutdown()`
 
 ## Prerequisites
 
 - Node.js 22+
 - pnpm
-- RabbitMQ running locally
+- Docker (for RabbitMQ)
 
 ## Quick Start
 
@@ -32,7 +33,36 @@ pnpm install
 pnpm dev:both
 ```
 
-Start the subscriber first so the queue exists before the publisher sends messages.
+Start the subscriber first so the queue exists before the publisher sends messages. The `dev:both` script handles this via `concurrently`.
+
+## Expected Output
+
+When running, you should see output like:
+
+```
+[Subscriber] Starting...
+[Subscriber] Broker created successfully
+[Subscriber] Running. Waiting for messages. Press Ctrl+C to stop
+[Publisher] Starting...
+[Publisher] Broker created successfully
+[Publisher] Sent message #1: Hello from publisher (#1)
+[Publisher] Running. Press Ctrl+C to stop
+[Subscriber] Received message: { id: 1, text: 'Hello from publisher (#1)', ... }
+[Publisher] Sent message #2: Hello from publisher (#2)
+[Subscriber] Received message: { id: 2, text: 'Hello from publisher (#2)', ... }
+```
+
+Messages publish every 3 seconds by default (configurable via `PUBLISH_INTERVAL`).
+
+## What to Look For in the Code
+
+1. **Topology separation** (`src/publisher/messaging/topology.ts` vs `src/subscriber/messaging/topology.ts`) — the publisher only declares the exchange and publication; the subscriber declares the exchange, queue, binding, and subscription. Both declare the same exchange because RabbitMQ declarations are idempotent.
+
+2. **Middleware ordering** (`src/subscriber/messaging/broker.ts`) — `withCustomLogger` runs first so downstream middleware logs through the custom logger. `withSubscriptions` runs last because it validates handler keys against the finalized topology.
+
+3. **Subscription name mapping** — the subscription name `on_event` in the topology must exactly match the key in `withSubscriptions({ on_event: messageHandler })`. This is how hoppity-subscriptions wires handlers to queues.
+
+4. **Message handler** (`src/subscriber/messaging/handlers/messageHandler.ts`) — receives parsed content (Rascal handles JSON deserialization) and calls `ackOrNack()` to acknowledge.
 
 ## Architecture
 

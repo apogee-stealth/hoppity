@@ -2,7 +2,15 @@ import { Logger } from "@apogeelabs/hoppity";
 
 /**
  * Simple structured logger implementing the hoppity Logger interface.
- * In a real app, you'd swap this for Winston, Pino, etc.
+ *
+ * Hoppity's `Logger` interface requires six log levels: silly, debug, info,
+ * warn, error, and critical. This implementation prefixes each line with the
+ * level name for readability in the console.
+ *
+ * In a real app, you'd swap this for Winston, Pino, etc. — anything that
+ * satisfies the `Logger` interface works. Pass your logger to
+ * `withCustomLogger({ logger })` and hoppity's internal pipeline logging
+ * (plus any middleware that uses `context.logger`) will go through it.
  */
 export const logger: Logger = {
     silly: (message: string, ...args: unknown[]) => console.debug(`[SILLY] ${message}`, ...args),

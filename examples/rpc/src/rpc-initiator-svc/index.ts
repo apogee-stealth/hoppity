@@ -3,13 +3,16 @@ import { getBroker } from "./messaging/broker";
 import { startInitiatorService } from "./initiatorService";
 
 /**
- * RPC Initiator Service
+ * RPC Initiator Service — entry point.
  *
- * Demonstrates:
- * 1. Using hoppity with a base topology
- * 2. Applying RPC middleware for service-to-service communication
- * 3. Making periodic RPC calls to RPC Handler Service
- * 4. Custom logger injection via hoppity-logger
+ * This is the "client" side of the RPC pattern. It:
+ * 1. Creates a broker with RPC infrastructure via `withRpcSupport`
+ * 2. Periodically sends RPC requests to the handler service
+ * 3. Awaits responses that arrive on its exclusive reply queue
+ *
+ * Each `broker.request()` call generates a unique correlation ID, publishes
+ * the request to the RPC exchange, and returns a Promise that resolves when
+ * the matching response arrives (or rejects on timeout).
  */
 async function main() {
     console.log("🚀 [RPC Initiator] Starting...");
@@ -26,6 +29,8 @@ async function main() {
         // Start the initiator service (sets up periodic RPC calls)
         const rpcInterval = await startInitiatorService();
 
+        // Clean shutdown: stop the interval first to prevent in-flight requests,
+        // then close the AMQP connection. Pending requests will be rejected.
         const shutdown = async () => {
             console.log("🛑 [RPC Initiator] Shutting down...");
             clearInterval(rpcInterval);

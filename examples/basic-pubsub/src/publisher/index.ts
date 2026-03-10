@@ -8,6 +8,11 @@ import { getBroker } from "./messaging/broker";
  * 1. withTopology() to declare exchanges and publications
  * 2. withCustomLogger() for custom logger injection
  * 3. broker.publish() to send messages
+ *
+ * The publisher creates a broker via hoppity's builder pattern, then
+ * publishes a message on a configurable interval. The "send_event"
+ * publication name must match a publication defined in the topology
+ * (see ./messaging/topology.ts).
  */
 async function main() {
     console.log("🚀 [Publisher] Starting...");
@@ -17,6 +22,8 @@ async function main() {
     });
 
     try {
+        // getBroker() builds the hoppity pipeline and returns a Rascal BrokerAsPromised.
+        // It's a singleton — multiple calls return the same broker instance.
         const broker = await getBroker();
         console.log("✅ [Publisher] Broker created successfully");
 
@@ -31,6 +38,8 @@ async function main() {
             };
 
             try {
+                // "send_event" is the publication name from the topology.
+                // Rascal resolves it to the correct exchange + routing key.
                 await broker.publish("send_event", message);
                 console.log(`📤 [Publisher] Sent message #${messageCount}:`, message.text);
             } catch (error) {
@@ -42,6 +51,7 @@ async function main() {
         await publishMessage();
         const interval = setInterval(publishMessage, config.publishInterval);
 
+        // Graceful shutdown: stop publishing, then close the AMQP connection
         const shutdown = async () => {
             console.log("🛑 [Publisher] Shutting down...");
             clearInterval(interval);
