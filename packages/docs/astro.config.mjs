@@ -85,7 +85,12 @@ export default defineConfig({
             sidebar: [
                 {
                     label: "Guide",
-                    items: [{ slug: "guide/introduction" }, { slug: "guide/getting-started" }],
+                    items: [
+                        { slug: "guide/introduction" },
+                        { slug: "guide/getting-started" },
+                        { slug: "guide/concepts" },
+                        { slug: "guide/examples" },
+                    ],
                 },
                 typeDocSidebarGroup,
             ],

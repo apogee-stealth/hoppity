@@ -5,7 +5,7 @@ prev: false
 title: "Hoppity"
 ---
 
-Defined in: [types.ts:13](https://github.com/apogee-travel/hoppity/blob/2a3626e486d3360dc3a1d039d4822c4598c8b024/packages/hoppity/src/types.ts#L13)
+Defined in: [types.ts:13](https://github.com/apogee-travel/hoppity/blob/a4276ee770620933dffaf48be1bb203ffaa7ae89/packages/hoppity/src/types.ts#L13)
 
 Main interface for the Rascal wrapper that provides the entry point to the middleware pipeline.
 
@@ -22,7 +22,7 @@ RascalWrapper
 
 > **use**(`middleware`): [`BuilderInterface`](/hoppity/api/interfaces/builderinterface/)
 
-Defined in: [types.ts:28](https://github.com/apogee-travel/hoppity/blob/2a3626e486d3360dc3a1d039d4822c4598c8b024/packages/hoppity/src/types.ts#L28)
+Defined in: [types.ts:28](https://github.com/apogee-travel/hoppity/blob/a4276ee770620933dffaf48be1bb203ffaa7ae89/packages/hoppity/src/types.ts#L28)
 
 Creates a builder instance with an empty topology and adds the first middleware.
 
@@ -46,7 +46,7 @@ The first middleware to add
 
 > **withTopology**(`topology`): [`BuilderInterface`](/hoppity/api/interfaces/builderinterface/)
 
-Defined in: [types.ts:20](https://github.com/apogee-travel/hoppity/blob/2a3626e486d3360dc3a1d039d4822c4598c8b024/packages/hoppity/src/types.ts#L20)
+Defined in: [types.ts:20](https://github.com/apogee-travel/hoppity/blob/a4276ee770620933dffaf48be1bb203ffaa7ae89/packages/hoppity/src/types.ts#L20)
 
 Creates a builder instance with an initial topology configuration.
 

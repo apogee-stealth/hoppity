@@ -5,6 +5,14 @@ prev: false
 title: "@apogeelabs/hoppity"
 ---
 
+## Example
+
+```typescript
+import hoppity from "@apogeelabs/hoppity";
+
+const broker = await hoppity.withTopology(topology).use(myMiddleware).build();
+```
+
 ## Classes
 
 - [ConsoleLogger](/hoppity/api/classes/consolelogger/)

@@ -1,0 +1,174 @@
+---
+title: Concepts
+description: Core concepts behind hoppity's middleware pipeline architecture.
+---
+
+## The Middleware Pipeline
+
+Hoppity's core idea is simple: instead of hand-crafting one massive Rascal `BrokerConfig` object per service, you compose small, reusable middleware functions that each handle one concern.
+
+```
+withTopology(base) → use(logger) → use(rpc) → use(subscriptions) → build()
+```
+
+Each middleware receives the current topology and a shared context, returns a (possibly modified) topology, and can optionally provide a lifecycle hook that runs after the broker is created.
+
+## Three Phases
+
+When you call `.build()`, three phases execute in order:
+
+### 1. Middleware Execution (synchronous)
+
+Each middleware function runs sequentially. It receives:
+
+- `topology` — the current `BrokerConfig`, as modified by all prior middleware
+- `context` — a shared `MiddlewareContext` with a logger, mutable data store, and middleware name tracking
+
+Each returns a `MiddlewareResult`:
+
+```typescript
+{
+    topology: BrokerConfig;                                       // Required — the (possibly modified) topology
+    onBrokerCreated?: (broker: BrokerAsPromised) => Promise<void>; // Optional lifecycle hook
+}
+```
+
+Middleware functions are **synchronous**. If you need async work (subscribing, publishing, setting up listeners), put it in `onBrokerCreated`.
+
+### 2. Broker Creation
+
+The final accumulated topology is passed to Rascal's `BrokerAsPromised.create()`. This is where the AMQP connection is established and all exchanges, queues, and bindings are declared in RabbitMQ.
+
+### 3. Callback Execution (async, sequential)
+
+Each `onBrokerCreated` callback runs in the order its middleware was registered. This is where subscription wiring, RPC listener registration, and other broker-dependent setup happens.
+
+If any callback throws, the broker is **shut down** before the error propagates. This ensures you don't leak AMQP connections on partial setup failures.
+
+## MiddlewareContext
+
+The shared context flows through the entire pipeline:
+
+```typescript
+interface MiddlewareContext {
+    data: Record<string, any>; // Mutable shared state for inter-middleware communication
+    middlewareNames: string[]; // Names of executed middleware (in order)
+    logger: Logger; // Logger instance (defaults to ConsoleLogger)
+}
+```
+
+- **`context.data`** — Any middleware can read/write here. Useful for passing configuration between middleware (e.g., validated subscription names, service metadata).
+- **`context.logger`** — All middleware should use this for logging. If `withCustomLogger` runs first, everything downstream uses your custom logger.
+- **`context.middlewareNames`** — Tracks execution order for diagnostics.
+
+## Middleware Ordering
+
+Order matters. The recommended convention:
+
+| Position | Middleware             | Reason                                                                  |
+| -------- | ---------------------- | ----------------------------------------------------------------------- |
+| 1st      | `withCustomLogger`     | Replaces `context.logger` so all downstream middleware uses your logger |
+| Middle   | `buildServiceTopology` | Generates topology from domain contracts                                |
+| Middle   | `withRpcSupport`       | Adds RPC exchange, queues, bindings                                     |
+| Middle   | `withDelayedPublish`   | Adds wait/ready queue infrastructure                                    |
+| Middle   | `withOperations`       | Wires typed handlers and extends the broker                             |
+| Last     | `withSubscriptions`    | Validates handler keys against the finalized topology                   |
+
+`withSubscriptions` should always be last because it validates that every handler key matches a subscription name in the topology. If earlier middleware adds subscriptions (e.g., `withOperations`), those must run first or validation will fail.
+
+## Topology
+
+Hoppity uses Rascal's `BrokerConfig` type for topology. This is a JSON-like object describing your RabbitMQ infrastructure:
+
+```typescript
+const topology: BrokerConfig = {
+    vhosts: {
+        "/": {
+            connection: { url: "amqp://guest:guest@localhost:5672" },
+            exchanges: {
+                /* ... */
+            },
+            queues: {
+                /* ... */
+            },
+            bindings: {
+                /* ... */
+            },
+            publications: {
+                /* ... */
+            },
+            subscriptions: {
+                /* ... */
+            },
+        },
+    },
+};
+```
+
+The topology is `structuredClone()`d at builder construction to prevent external mutation. Each middleware receives a copy and can modify it freely — the next middleware receives the previous middleware's output.
+
+## Extending the Broker
+
+Several middleware packages add methods to the broker instance (e.g., `broker.request()`, `broker.delayedPublish()`, `broker.publishEvent()`). Since Rascal's `BrokerAsPromised` type doesn't know about these, hoppity provides a `BrokerWithExtensions` utility type:
+
+```typescript
+import { BrokerWithExtensions } from "@apogeelabs/hoppity";
+import { RpcBroker } from "@apogeelabs/hoppity-rpc";
+import { DelayedPublishBroker } from "@apogeelabs/hoppity-delayed-publish";
+
+// Combine multiple extension interfaces
+type MyBroker = BrokerWithExtensions<[RpcBroker, DelayedPublishBroker]>;
+
+const broker = (await hoppity
+    .withTopology(topology)
+    .use(withRpcSupport(opts))
+    .use(withDelayedPublish(opts))
+    .build()) as MyBroker;
+
+// Now TypeScript knows about .request(), .addRpcListener(), and .delayedPublish()
+```
+
+## Contract-Driven Development
+
+The newer `hoppity-contracts` and `hoppity-operations` packages introduce a higher-level pattern:
+
+1. **Define domain contracts** — Shared Zod-validated schemas for events, commands, and RPC operations
+2. **Build service topology** — Declare what each service publishes/consumes using a fluent API
+3. **Wire typed handlers** — Register handlers that receive validated, typed payloads
+4. **Use typed broker methods** — `broker.publishEvent()`, `broker.sendCommand()`, `broker.request()` all enforce payload types at compile time
+
+This eliminates string-literal coupling between services and catches contract mismatches at build time rather than runtime.
+
+## Writing Custom Middleware
+
+A middleware is a function (or a factory that returns one) matching the `MiddlewareFunction` signature:
+
+```typescript
+import type { MiddlewareFunction } from "@apogeelabs/hoppity";
+
+function withMyFeature(options: MyOptions): MiddlewareFunction {
+    return (topology, context) => {
+        const modified = structuredClone(topology);
+        // Modify topology...
+
+        context.data.myFeature = {
+            /* share state downstream */
+        };
+        context.logger.info("My feature middleware executed");
+
+        return {
+            topology: modified,
+            onBrokerCreated: async broker => {
+                // Async setup after broker creation...
+            },
+        };
+    };
+}
+```
+
+Key rules:
+
+- **Clone before modifying** — Use `structuredClone(topology)` to avoid mutating the input
+- **Synchronous body** — The middleware function itself must be synchronous. Async work goes in `onBrokerCreated`
+- **Return topology** — Always return `{ topology }` even if you didn't modify it
+- **Use `context.logger`** — Not `console.log`. Respect the pipeline's logger.

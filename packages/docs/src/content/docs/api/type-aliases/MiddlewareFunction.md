@@ -7,7 +7,7 @@ title: "MiddlewareFunction"
 
 > **MiddlewareFunction** = (`topology`, `context`) => [`MiddlewareResult`](/hoppity/api/interfaces/middlewareresult/)
 
-Defined in: [types.ts:178](https://github.com/apogee-travel/hoppity/blob/2a3626e486d3360dc3a1d039d4822c4598c8b024/packages/hoppity/src/types.ts#L178)
+Defined in: [types.ts:178](https://github.com/apogee-travel/hoppity/blob/a4276ee770620933dffaf48be1bb203ffaa7ae89/packages/hoppity/src/types.ts#L178)
 
 Middleware function that can modify the topology and optionally provide a callback.
 Middleware functions are executed in the order they are added to the pipeline.

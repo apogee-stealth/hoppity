@@ -16,6 +16,9 @@ npm install @apogeelabs/hoppity-rpc
 npm install @apogeelabs/hoppity-delayed-publish
 npm install @apogeelabs/hoppity-subscriptions
 npm install @apogeelabs/hoppity-logger
+
+# For contract-driven development (optional)
+npm install @apogeelabs/hoppity-contracts @apogeelabs/hoppity-operations zod
 ```
 
 :::note
@@ -64,7 +67,7 @@ const topology = {
     },
 };
 
-const broker = await hoppity().withTopology(topology).build();
+const broker = await hoppity.withTopology(topology).build();
 ```
 
 ## Adding Middleware
@@ -74,12 +77,13 @@ The real power is in composing middleware. Each `.use()` call adds a middleware 
 ```typescript
 import hoppity from "@apogeelabs/hoppity";
 import { withCustomLogger } from "@apogeelabs/hoppity-logger";
-import { withRpc } from "@apogeelabs/hoppity-rpc";
+import { withRpcSupport } from "@apogeelabs/hoppity-rpc";
+import { randomUUID } from "crypto";
 
-const broker = await hoppity()
+const broker = await hoppity
     .withTopology(topology)
-    .use(withCustomLogger(myLogger)) // logger first — used by downstream middleware
-    .use(withRpc({ timeout: 5000 }))
+    .use(withCustomLogger({ logger: myLogger })) // logger first — used by downstream middleware
+    .use(withRpcSupport({ serviceName: "my-svc", instanceId: randomUUID() }))
     .build();
 ```
 
@@ -112,10 +116,11 @@ const myMiddleware: MiddlewareFunction = (topology, context) => {
     };
 };
 
-const broker = await hoppity().withTopology(topology).use(myMiddleware).build();
+const broker = await hoppity.withTopology(topology).use(myMiddleware).build();
 ```
 
 ## Next Steps
 
-- Read the [Introduction](/guide/introduction/) for a deeper look at the architecture
-- Browse the API reference in the sidebar for full type documentation
+- Read the [Concepts](/hoppity/guide/concepts/) guide for a deep dive into the middleware pipeline, three-phase execution, and topology patterns
+- Browse the [Examples](/hoppity/guide/examples/) to see runnable demos of pub/sub, delayed publish, RPC, and contract-driven development
+- Check the API reference in the sidebar for full type documentation
