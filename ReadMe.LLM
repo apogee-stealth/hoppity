@@ -11,6 +11,8 @@ Pattern-driven RabbitMQ topology builder for Node.js microservices, built on Ras
 | hoppity-delayed-publish | `@apogeelabs/hoppity-delayed-publish` | 0.2.0 | Stable | `@apogeelabs/hoppity` (workspace), `rascal@^20.1.1` (peer) |
 | hoppity-subscriptions | `@apogeelabs/hoppity-subscriptions` | 0.2.0 | Stable | `@apogeelabs/hoppity` (workspace), `rascal@^20.1.1` (peer) |
 | hoppity-logger | `@apogeelabs/hoppity-logger` | 0.2.0 | Stable | `@apogeelabs/hoppity` (workspace), `rascal@^20.1.1` (peer) |
+| hoppity-contracts | `@apogeelabs/hoppity-contracts` | 0.2.0 | Stable | `zod@^3.22.0` (peer) |
+| hoppity-operations | `@apogeelabs/hoppity-operations` | 0.1.0 | Stable | `@apogeelabs/hoppity` (workspace), `@apogeelabs/hoppity-contracts` (workspace), `rascal@^20.1.1` (peer), `zod@^3.22.0` (peer) |
 
 All packages require Node >= 22. All produce CJS, ESM, and type declarations.
 
@@ -199,6 +201,210 @@ interface WithCustomLoggerOptions {
 }
 ```
 
+### Contracts Types (`@apogeelabs/hoppity-contracts`)
+
+```typescript
+import { ZodTypeAny, z } from "zod";
+
+// Domain event contract — something that happened
+interface EventContract<
+    TDomain extends string = string,
+    TName extends string = string,
+    TSchema extends ZodTypeAny = ZodTypeAny,
+> {
+    _type: "event";
+    _domain: TDomain;
+    _name: TName;
+    schema: TSchema;
+    exchange: string;           // RabbitMQ exchange name
+    routingKey: string;         // Topic routing key: {domain}.event.{snake_name}
+    publicationName: string;    // Rascal publication name: {domain}_event_{snake_name}
+    subscriptionName: string;   // Rascal subscription name: {domain}_event_{snake_name}
+}
+
+// Domain command contract — an instruction to do something
+interface CommandContract<
+    TDomain extends string = string,
+    TName extends string = string,
+    TSchema extends ZodTypeAny = ZodTypeAny,
+> {
+    _type: "command";
+    _domain: TDomain;
+    _name: TName;
+    schema: TSchema;
+    exchange: string;
+    routingKey: string;         // {domain}.command.{snake_name}
+    publicationName: string;    // {domain}_command_{snake_name}
+    subscriptionName: string;   // {domain}_command_{snake_name}
+}
+
+// Domain RPC contract — synchronous request/response
+interface RpcContract<
+    TDomain extends string = string,
+    TName extends string = string,
+    TRequest extends ZodTypeAny = ZodTypeAny,
+    TResponse extends ZodTypeAny = ZodTypeAny,
+> {
+    _type: "rpc";
+    _domain: TDomain;
+    _name: TName;
+    requestSchema: TRequest;
+    responseSchema: TResponse;
+    exchange: string;           // {domain}_rpc
+    routingKey: string;         // {domain}.rpc.{snake_name}
+    publicationName: string;    // {domain}_rpc_{snake_name}
+    subscriptionName: string;   // {domain}_rpc_{snake_name}
+}
+
+// Input to defineDomain
+interface DomainDefinitionInput<
+    TEvents extends EventsDefinition = EventsDefinition,
+    TCommands extends CommandsDefinition = CommandsDefinition,
+    TRpc extends RpcDefinition = RpcDefinition,
+> {
+    events?: TEvents;
+    commands?: TCommands;
+    rpc?: TRpc;
+}
+
+type EventsDefinition = Record<string, ZodTypeAny>;
+type CommandsDefinition = Record<string, ZodTypeAny>;
+type RpcDefinition = Record<string, { request: ZodTypeAny; response: ZodTypeAny }>;
+
+// Return type of defineDomain
+interface DomainDefinition<TDomain, TEvents, TCommands, TRpc> {
+    domain: TDomain;
+    events: EventContracts<TDomain, TEvents>;
+    commands: CommandContracts<TDomain, TCommands>;
+    rpc: RpcContracts<TDomain, TRpc>;
+}
+
+// Topology builder interface (inside buildServiceTopology callback)
+interface TopologyBuilder {
+    publishesEvent(contract: EventContract): TopologyBuilder;
+    subscribesToEvent(contract: EventContract, options?: HandlerOptions): TopologyBuilder;
+    sendsCommand(contract: CommandContract): TopologyBuilder;
+    handlesCommand(contract: CommandContract, options?: HandlerOptions): TopologyBuilder;
+    callsRpc(contract: RpcContract): TopologyBuilder;
+    respondsToRpc(contract: RpcContract, options?: HandlerOptions): TopologyBuilder;
+}
+
+interface HandlerOptions {
+    queueType?: "quorum" | "classic";   // Defaults to "quorum"
+    redeliveries?: { limit: number };   // Defaults to 5
+    deadLetter?: { exchange: string; routingKey?: string };
+}
+```
+
+### Operations Types (`@apogeelabs/hoppity-operations`)
+
+```typescript
+import { BrokerAsPromised, PublicationConfig } from "rascal";
+import { EventContract, CommandContract, RpcContract } from "@apogeelabs/hoppity-contracts";
+import { z, ZodTypeAny } from "zod";
+
+// Middleware options
+interface OperationsMiddlewareOptions {
+    serviceName: string;
+    instanceId: string;
+    handlers: HandlerDeclaration[];
+    defaultTimeout?: number;       // RPC timeout in ms (defaults to 30_000)
+    validateInbound?: boolean;     // Validate inbound payloads (defaults to true)
+    validateOutbound?: boolean;    // Validate outbound payloads (defaults to false)
+}
+
+// Extended broker — adds typed operation methods to BrokerAsPromised
+interface OperationsBroker extends BrokerAsPromised {
+    publishEvent<TSchema extends ZodTypeAny>(
+        contract: EventContract<any, any, TSchema>,
+        message: z.infer<TSchema>,
+        overrides?: PublicationConfig
+    ): Promise<void>;
+
+    sendCommand<TSchema extends ZodTypeAny>(
+        contract: CommandContract<any, any, TSchema>,
+        message: z.infer<TSchema>,
+        overrides?: PublicationConfig
+    ): Promise<void>;
+
+    request<TReq extends ZodTypeAny, TRes extends ZodTypeAny>(
+        contract: RpcContract<any, any, TReq, TRes>,
+        message: z.infer<TReq>,
+        overrides?: PublicationConfig
+    ): Promise<z.infer<TRes>>;
+
+    cancelRequest(correlationId: string): boolean;
+}
+
+// Handler context — passed to every handler invocation
+interface HandlerContext {
+    broker: OperationsBroker;
+}
+
+// Handler function signatures
+type EventHandler<TSchema extends ZodTypeAny> = (
+    content: z.infer<TSchema>,
+    context: HandlerContext
+) => Promise<void> | void;
+
+type CommandHandler<TSchema extends ZodTypeAny> = (
+    content: z.infer<TSchema>,
+    context: HandlerContext
+) => Promise<void> | void;
+
+type RpcHandler<TReq extends ZodTypeAny, TRes extends ZodTypeAny> = (
+    request: z.infer<TReq>,
+    context: HandlerContext
+) => Promise<z.infer<TRes>>;
+
+// Handler declarations — returned by onEvent / onCommand / onRpc
+interface EventHandlerDeclaration {
+    _kind: "event";
+    contract: EventContract;
+    handler: EventHandler<any>;
+}
+
+interface CommandHandlerDeclaration {
+    _kind: "command";
+    contract: CommandContract;
+    handler: CommandHandler<any>;
+}
+
+interface RpcHandlerDeclaration {
+    _kind: "rpc";
+    contract: RpcContract;
+    handler: RpcHandler<any, any>;
+}
+
+type HandlerDeclaration =
+    | EventHandlerDeclaration
+    | CommandHandlerDeclaration
+    | RpcHandlerDeclaration;
+
+// RPC wire envelope (compatible with hoppity-rpc format)
+interface RpcRequest {
+    correlationId: string;
+    rpcName: string;
+    payload: any;
+    replyTo: string;
+    headers?: Record<string, any>;
+}
+
+interface RpcResponse {
+    correlationId: string;
+    payload?: any;
+    error?: { code: string; message: string; details?: any };
+}
+
+const RpcErrorCode = {
+    HANDLER_ERROR: "RPC_HANDLER_ERROR",
+    TIMEOUT: "RPC_TIMEOUT",
+    CANCELLED: "RPC_CANCELLED",
+} as const;
+
+type RpcErrorCodeValue = (typeof RpcErrorCode)[keyof typeof RpcErrorCode];
+```
+
 ## Function Signatures
 
 ### `@apogeelabs/hoppity`
@@ -241,6 +447,42 @@ function validateSubscriptionHandlers(
 
 ```typescript
 function withCustomLogger(options: WithCustomLoggerOptions): MiddlewareFunction;
+```
+
+### `@apogeelabs/hoppity-contracts`
+
+```typescript
+function defineDomain<TDomain extends string, TEvents, TCommands, TRpc>(
+    domain: TDomain,
+    input: DomainDefinitionInput<TEvents, TCommands, TRpc>
+): DomainDefinition<TDomain, TEvents, TCommands, TRpc>;
+
+function buildServiceTopology(
+    vhost: string,
+    connection: { hostname: string; user: string; password: string; port: number; vhost: string },
+    callback: (builder: TopologyBuilder) => void
+): MiddlewareFunction;
+```
+
+### `@apogeelabs/hoppity-operations`
+
+```typescript
+function withOperations(options: OperationsMiddlewareOptions): MiddlewareFunction;
+
+function onEvent<TSchema extends ZodTypeAny>(
+    contract: EventContract<any, any, TSchema>,
+    handler: EventHandler<TSchema>
+): EventHandlerDeclaration;
+
+function onCommand<TSchema extends ZodTypeAny>(
+    contract: CommandContract<any, any, TSchema>,
+    handler: CommandHandler<TSchema>
+): CommandHandlerDeclaration;
+
+function onRpc<TReq extends ZodTypeAny, TRes extends ZodTypeAny>(
+    contract: RpcContract<any, any, TReq, TRes>,
+    handler: RpcHandler<TReq, TRes>
+): RpcHandlerDeclaration;
 ```
 
 ## Per-Function Usage Examples
@@ -437,6 +679,79 @@ const broker = await hoppity
     .use(withCustomLogger({ logger }))
     .use(withRpcSupport({ serviceName: "my-svc", instanceId: "abc" }))
     .build();
+```
+
+### withOperations (contract-driven operations)
+
+```typescript
+import hoppity from "@apogeelabs/hoppity";
+import { defineDomain, buildServiceTopology } from "@apogeelabs/hoppity-contracts";
+import {
+    withOperations,
+    onEvent,
+    onCommand,
+    onRpc,
+    OperationsBroker,
+} from "@apogeelabs/hoppity-operations";
+import { randomUUID } from "crypto";
+import { z } from "zod";
+
+// 1. Define domain contracts
+const inventory = defineDomain("donated_inventory", {
+    events: {
+        created: z.object({ itemId: z.string(), name: z.string() }),
+    },
+    commands: {
+        reserveItem: z.object({ itemId: z.string(), quantity: z.number() }),
+    },
+    rpc: {
+        getQuote: {
+            request: z.object({ itemId: z.string() }),
+            response: z.object({ price: z.number(), currency: z.string() }),
+        },
+    },
+});
+
+// 2. Build topology from contracts
+const connection = {
+    hostname: "localhost",
+    user: "guest",
+    password: "guest",
+    port: 5672,
+    vhost: "/",
+};
+
+const topologyMiddleware = buildServiceTopology("/", connection, (builder) => {
+    builder
+        .publishesEvent(inventory.events.created)
+        .handlesCommand(inventory.commands.reserveItem)
+        .respondsToRpc(inventory.rpc.getQuote);
+});
+
+// 3. Wire handlers + build broker
+const broker = await hoppity
+    .use(topologyMiddleware)
+    .use(
+        withOperations({
+            serviceName: "inventory-service",
+            instanceId: randomUUID(),
+            handlers: [
+                onCommand(inventory.commands.reserveItem, async (content, { broker }) => {
+                    console.log("Reserving item:", content.itemId);
+                }),
+                onRpc(inventory.rpc.getQuote, async (request) => {
+                    return { price: 42.0, currency: "USD" };
+                }),
+            ],
+        })
+    )
+    .build() as OperationsBroker;
+
+// 4. Use typed broker methods
+await broker.publishEvent(inventory.events.created, { itemId: "abc", name: "Widget" });
+await broker.sendCommand(inventory.commands.reserveItem, { itemId: "abc", quantity: 1 });
+const quote = await broker.request(inventory.rpc.getQuote, { itemId: "abc" });
+console.log(quote.price); // 42.0
 ```
 
 ## Writing Custom Middleware
@@ -912,6 +1227,38 @@ import type { ValidationResult } from "@apogeelabs/hoppity-subscriptions";
 import { withCustomLogger } from "@apogeelabs/hoppity-logger";
 import type { WithCustomLoggerOptions } from "@apogeelabs/hoppity-logger";
 import type { Logger } from "@apogeelabs/hoppity-logger";           // Re-exported from core
+
+// @apogeelabs/hoppity-contracts
+import { defineDomain } from "@apogeelabs/hoppity-contracts";
+import { buildServiceTopology } from "@apogeelabs/hoppity-contracts";
+import { withOutboundExchange } from "@apogeelabs/hoppity-contracts";
+import type { EventContract } from "@apogeelabs/hoppity-contracts";
+import type { CommandContract } from "@apogeelabs/hoppity-contracts";
+import type { RpcContract } from "@apogeelabs/hoppity-contracts";
+import type { DomainDefinition } from "@apogeelabs/hoppity-contracts";
+import type { DomainDefinitionInput } from "@apogeelabs/hoppity-contracts";
+import type { TopologyBuilder } from "@apogeelabs/hoppity-contracts";
+import type { HandlerOptions } from "@apogeelabs/hoppity-contracts";
+
+// @apogeelabs/hoppity-operations
+import { withOperations } from "@apogeelabs/hoppity-operations";
+import { onEvent } from "@apogeelabs/hoppity-operations";
+import { onCommand } from "@apogeelabs/hoppity-operations";
+import { onRpc } from "@apogeelabs/hoppity-operations";
+import { RpcErrorCode } from "@apogeelabs/hoppity-operations";
+import type { OperationsBroker } from "@apogeelabs/hoppity-operations";
+import type { OperationsMiddlewareOptions } from "@apogeelabs/hoppity-operations";
+import type { HandlerContext } from "@apogeelabs/hoppity-operations";
+import type { EventHandler } from "@apogeelabs/hoppity-operations";
+import type { CommandHandler } from "@apogeelabs/hoppity-operations";
+import type { RpcHandler } from "@apogeelabs/hoppity-operations";
+import type { HandlerDeclaration } from "@apogeelabs/hoppity-operations";
+import type { EventHandlerDeclaration } from "@apogeelabs/hoppity-operations";
+import type { CommandHandlerDeclaration } from "@apogeelabs/hoppity-operations";
+import type { RpcHandlerDeclaration } from "@apogeelabs/hoppity-operations";
+import type { RpcRequest } from "@apogeelabs/hoppity-operations";
+import type { RpcResponse } from "@apogeelabs/hoppity-operations";
+import type { RpcErrorCodeValue } from "@apogeelabs/hoppity-operations";
 ```
 
 ⚠️ There are **NO** other valid import paths. Do not attempt to import from `dist/`, sub-modules, or internal files.
@@ -963,8 +1310,10 @@ export async function createBroker() {
 
 ```
 1. withCustomLogger       — Logger first (so all others can use it)
-2. withRpcSupport         — Topology additions
-3. withDelayedPublish     — Topology additions
-4. withSubscriptions      — Validates + wires (should be last, after topology is finalized)
-5. Custom middleware       — Your own middleware, ordered by dependency
+2. buildServiceTopology   — Contract-driven topology generation (from hoppity-contracts)
+3. withRpcSupport         — Topology additions (legacy, use withOperations for new code)
+4. withDelayedPublish     — Topology additions
+5. withOperations         — Contract-driven handlers + typed broker methods (after topology)
+6. withSubscriptions      — Validates + wires (should be last, after topology is finalized)
+7. Custom middleware       — Your own middleware, ordered by dependency
 ```

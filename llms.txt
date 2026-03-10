@@ -13,8 +13,10 @@ Hoppity is a composable middleware pipeline for building RabbitMQ broker topolog
 | hoppity-delayed-publish | `@apogeelabs/hoppity-delayed-publish` | TTL-based delayed message publishing via dead-letter exchanges | Stable (pre-1.0) |
 | hoppity-subscriptions | `@apogeelabs/hoppity-subscriptions` | Auto-wiring subscription handlers to broker with topology validation | Stable (pre-1.0) |
 | hoppity-logger | `@apogeelabs/hoppity-logger` | Custom logger injection (Winston, Pino, etc.) into middleware context | Stable (pre-1.0) |
+| hoppity-contracts | `@apogeelabs/hoppity-contracts` | Typed domain contracts (events, commands, RPC) with Zod schemas and topology generation | Stable (pre-1.0) |
+| hoppity-operations | `@apogeelabs/hoppity-operations` | Typed runtime broker operations — publishEvent, sendCommand, request — using contract objects from hoppity-contracts | v0.1.0 |
 
-All packages are at version 0.2.0.
+Stable packages are at version 0.2.0 unless otherwise noted.
 
 ## Documentation Map
 
@@ -38,6 +40,27 @@ All packages are at version 0.2.0.
 | `packages/hoppity-subscriptions/llms-usage.md` | Subscriptions package LLM usage guide |
 | `packages/hoppity-logger/README.md` | Logger package documentation |
 | `packages/hoppity-logger/llms-usage.md` | Logger package LLM usage guide |
+| `packages/hoppity-contracts/README.md` | Contracts package documentation |
+| `packages/hoppity-operations/README.md` | Operations package documentation |
+| `packages/hoppity-operations/llms-usage.md` | Operations package LLM usage guide |
+| `packages/hoppity-contracts/llms-usage.md` | Contracts package LLM usage guide |
+| `examples/basic-pubsub/README.md` | Basic pub/sub example documentation |
+| `examples/basic-pubsub/llms-usage.md` | Basic pub/sub example LLM usage guide |
+| `examples/delayed-publish/README.md` | Delayed publish example documentation |
+| `examples/delayed-publish/llms-usage.md` | Delayed publish example LLM usage guide |
+| `examples/rpc/README.md` | RPC example documentation |
+| `examples/rpc/llms-usage.md` | RPC example LLM usage guide |
+| `examples/bookstore/README.md` | Bookstore multi-service example (contracts + operations) |
+| `examples/bookstore/llms-usage.md` | Bookstore example LLM usage guide |
+
+## Examples
+
+| Example | Demonstrates |
+|---------|-------------|
+| `examples/basic-pubsub` | Core pub/sub with `withCustomLogger` and `withSubscriptions` |
+| `examples/delayed-publish` | TTL-based delayed messages with `withDelayedPublish` |
+| `examples/rpc` | Request/response with `withRpcSupport`, `broker.request()`, `broker.addRpcListener()` |
+| `examples/bookstore` | Multi-service with `defineDomain`, `buildServiceTopology`, `withOperations`, `withOutboundExchange`, outbound exchange taps |
 
 ## Note on Experimental Packages
 

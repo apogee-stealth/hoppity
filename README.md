@@ -45,6 +45,8 @@ You can also view the examples for real-world usage:
 - [`hoppity-logger`](./packages/hoppity-logger) – Plug in custom loggers (e.g., Winston)
 - [`hoppity-rpc`](./packages/hoppity-rpc) – RPC topology and helpers
 - [`hoppity-subscriptions`](./packages/hoppity-subscriptions) – Auto-subscribe by matching topology to handlers
+- [`hoppity-contracts`](./packages/hoppity-contracts) – Typed domain contracts (events, commands, RPC) with Zod schemas and topology generation
+- [`hoppity-operations`](./packages/hoppity-operations) – Typed runtime broker operations — publishEvent, sendCommand, request — using contract objects from hoppity-contracts
 
 ---
 
@@ -53,6 +55,7 @@ You can also view the examples for real-world usage:
 - [`examples/basic-pubsub`](./examples/basic-pubsub) – Basic pub/sub with core hoppity and subscriptions
 - [`examples/delayed-publish`](./examples/delayed-publish) – Demonstrates delayed publishing and subscriptions
 - [`examples/rpc`](./examples/rpc) – Demonstrates RPC pattern usage
+- [`examples/bookstore`](./examples/bookstore) – Multi-service demo using contracts, operations, outbound exchange taps, and the full middleware stack
 
 ---
 
