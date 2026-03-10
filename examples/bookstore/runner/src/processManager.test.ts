@@ -12,7 +12,7 @@ const mockChild = {
 };
 
 const mockSpawn = jest.fn();
-jest.mock("child_process", () => ({
+jest.mock("node:child_process", () => ({
     spawn: mockSpawn,
 }));
 
