@@ -1,7 +1,18 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import hoppity, { defineDomain, onEvent, ServiceBroker } from "@apogeelabs/hoppity";
 import { z } from "zod";
+import { createTestTopology } from "./helpers/createTestTopology";
 import { silentLogger } from "./helpers/silentLogger";
+
+function makeConnection() {
+    const topology = createTestTopology();
+    const rawVhost = (topology.vhosts as any)["/"];
+    return {
+        url: rawVhost.connection.url as string,
+        vhost: "/",
+        options: { heartbeat: 5 },
+    };
+}
 
 const TestDomain = defineDomain("grub", {
     events: {
@@ -31,7 +42,7 @@ describe("delayed-delivery: message arrives after TTL expiry", () => {
 
                 hoppity
                     .service(SERVICE_NAME, {
-                        connection: { url: process.env.RABBITMQ_URL! },
+                        connection: makeConnection(),
                         handlers: [
                             onEvent(TestDomain.events.delayedOrder, async payload => {
                                 clearTimeout(timer);
@@ -96,7 +107,7 @@ describe("delayed-delivery: message arrives after TTL expiry", () => {
 
                 hoppity
                     .service(SERVICE_NAME, {
-                        connection: { url: process.env.RABBITMQ_URL! },
+                        connection: makeConnection(),
                         handlers: [
                             onEvent(TestDomain.events.delayedOrder, async payload => {
                                 clearTimeout(timer);
@@ -162,7 +173,7 @@ describe("delayed-delivery: message arrives after TTL expiry", () => {
 
                 hoppity
                     .service(SERVICE_NAME, {
-                        connection: { url: process.env.RABBITMQ_URL! },
+                        connection: makeConnection(),
                         handlers: [
                             onEvent(TestDomain.events.delayedOrder, async payload => {
                                 clearTimeout(timer);
