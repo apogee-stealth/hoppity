@@ -1,30 +1,60 @@
 # Hoppity
 
-> Pattern-driven RabbitMQ topology for Node.js microservices, built on Rascal.
+> Contract-driven RabbitMQ topology builder for Node.js microservices, built on Rascal.
 
-Hoppity is a composable middleware pipeline for building RabbitMQ broker topologies. Each middleware receives a Rascal `BrokerConfig` and a shared `MiddlewareContext`, can modify both, and optionally return an `onBrokerCreated` callback for post-creation setup. The builder pattern (`withTopology().use(middleware).build()`) produces a fully configured Rascal `BrokerAsPromised` instance.
+Handlers and publish declarations ARE the topology. You declare what your service handles and what it sends. `deriveTopology` generates all Rascal config automatically from contract declarations. No topology files. No manual Rascal config. The entry point is `hoppity.service(name, config).use(middleware).build()`, which returns a fully-wired `ServiceBroker`.
 
 ## Packages
 
-| Package | npm / Import Path | Description | Status |
-|---------|-------------------|-------------|--------|
-| hoppity | `@apogeelabs/hoppity` | Core middleware pipeline and builder API | Stable (pre-1.0) |
-| hoppity-rpc | `@apogeelabs/hoppity-rpc` | Request/response RPC with correlation IDs and configurable timeouts | Stable (pre-1.0) |
-| hoppity-delayed-publish | `@apogeelabs/hoppity-delayed-publish` | TTL-based delayed message publishing via dead-letter exchanges | Stable (pre-1.0) |
-| hoppity-subscriptions | `@apogeelabs/hoppity-subscriptions` | Auto-wiring subscription handlers to broker with topology validation | Stable (pre-1.0) |
-| hoppity-logger | `@apogeelabs/hoppity-logger` | Custom logger injection (Winston, Pino, etc.) into middleware context | Stable (pre-1.0) |
-| hoppity-contracts | `@apogeelabs/hoppity-contracts` | Typed domain contracts (events, commands, RPC) with Zod schemas and topology generation | Stable (pre-1.0) |
-| hoppity-operations | `@apogeelabs/hoppity-operations` | Typed runtime broker operations — publishEvent, sendCommand, request — using contract objects from hoppity-contracts | v0.1.0 |
+| Package | npm / Import Path | Version | Description |
+|---------|-------------------|---------|-------------|
+| hoppity | `@apogeelabs/hoppity` | 1.0.0 | Core — contracts, handlers, topology derivation, broker wiring, middleware pipeline, interceptors |
+| hoppity-logger | `@apogeelabs/hoppity-logger` | 1.0.0 | Custom logger injection (Winston, Pino, etc.) into middleware context (middleware) |
+| hoppity-open-telemetry | `@apogeelabs/hoppity-open-telemetry` | 0.1.0 | Tracing and metrics interceptors via OpenTelemetry API |
 
-Stable packages are at version 0.2.0 unless otherwise noted.
+All packages require Node >= 22. All produce CJS, ESM, and type declarations.
+
+## Key Concepts
+
+- **`defineDomain(name, { events, commands, rpc })`** — Declares a domain's contracts with Zod schemas. Returns typed contract objects that carry exchange names, routing keys, and publication/subscription names.
+- **`onEvent(contract, handler, options?)`** — Creates a handler declaration for a domain event.
+- **`onCommand(contract, handler, options?)`** — Creates a handler declaration for a domain command.
+- **`onRpc(contract, handler, options?)`** — Creates a handler declaration for an RPC operation.
+- **`ServiceBroker`** — The wired broker returned by `.build()`. Extends Rascal's `BrokerAsPromised` with `publishEvent`, `sendCommand`, `request`, and `cancelRequest`.
+- **Middleware** — `(topology, context) => { topology, onBrokerCreated? }`. Cross-cutting concerns only. Runs between topology derivation and broker creation.
+- **Interceptors** — Per-message runtime wrappers. Configured in `ServiceConfig.interceptors`. An `Interceptor` declares `inbound` (wraps handler execution) and/or `outbound` (wraps publish calls). Compose at build time; applied per message. The extension point for tracing, metrics, and header injection.
+
+## Quick Example
+
+```typescript
+import { z } from "zod";
+import hoppity, { defineDomain, onEvent } from "@apogeelabs/hoppity";
+
+const OrdersDomain = defineDomain("orders", {
+    events: {
+        orderCreated: z.object({ orderId: z.string(), total: z.number() }),
+    },
+});
+
+const broker = await hoppity
+    .service("catalog-service", {
+        connection: { url: "amqp://localhost" },
+        handlers: [
+            onEvent(OrdersDomain.events.orderCreated, async (content, { broker }) => {
+                console.log("Order created:", content.orderId);
+            }),
+        ],
+    })
+    .build();
+```
 
 ## Documentation Map
 
 | File | Purpose |
 |------|---------|
 | `llms.txt` | This file — project orientation and navigation |
-| `ReadMe.LLM` | Code generation cheat sheet with all types, signatures, and examples for writing correct code |
-| `CLAUDE.md` | AI agent development guide for working ON this codebase |
+| `ReadMe.LLM` | Complete API reference for code generation (types, signatures, examples) |
+| `CLAUDE.md` | AI agent guide for developing ON this codebase |
 | `README.md` | Human-facing project overview |
 | `DEVELOP.md` | Development workflow, tooling, and contribution setup |
 | `CONTRIBUTING.md` | Contribution guidelines and PR process |
@@ -32,36 +62,24 @@ Stable packages are at version 0.2.0 unless otherwise noted.
 | `.ai/UnitTestExamples.md` | Working unit test examples |
 | `packages/hoppity/README.md` | Core package documentation |
 | `packages/hoppity/llms-usage.md` | Core package LLM usage guide |
-| `packages/hoppity-rpc/README.md` | RPC package documentation |
-| `packages/hoppity-rpc/llms-usage.md` | RPC package LLM usage guide |
-| `packages/hoppity-delayed-publish/README.md` | Delayed publish package documentation |
-| `packages/hoppity-delayed-publish/llms-usage.md` | Delayed publish package LLM usage guide |
-| `packages/hoppity-subscriptions/README.md` | Subscriptions package documentation |
-| `packages/hoppity-subscriptions/llms-usage.md` | Subscriptions package LLM usage guide |
-| `packages/hoppity-logger/README.md` | Logger package documentation |
-| `packages/hoppity-logger/llms-usage.md` | Logger package LLM usage guide |
-| `packages/hoppity-contracts/README.md` | Contracts package documentation |
-| `packages/hoppity-operations/README.md` | Operations package documentation |
-| `packages/hoppity-operations/llms-usage.md` | Operations package LLM usage guide |
-| `packages/hoppity-contracts/llms-usage.md` | Contracts package LLM usage guide |
+| `packages/hoppity-logger/README.md` | Logger middleware documentation |
+| `packages/hoppity-logger/llms-usage.md` | Logger middleware LLM usage guide |
 | `examples/basic-pubsub/README.md` | Basic pub/sub example documentation |
 | `examples/basic-pubsub/llms-usage.md` | Basic pub/sub example LLM usage guide |
-| `examples/delayed-publish/README.md` | Delayed publish example documentation |
-| `examples/delayed-publish/llms-usage.md` | Delayed publish example LLM usage guide |
-| `examples/rpc/README.md` | RPC example documentation |
-| `examples/rpc/llms-usage.md` | RPC example LLM usage guide |
-| `examples/bookstore/README.md` | Bookstore multi-service example (contracts + operations) |
+| `examples/bookstore/README.md` | Bookstore multi-service example (contracts, events, RPC, middleware) |
 | `examples/bookstore/llms-usage.md` | Bookstore example LLM usage guide |
 
 ## Examples
 
 | Example | Demonstrates |
 |---------|-------------|
-| `examples/basic-pubsub` | Core pub/sub with `withCustomLogger` and `withSubscriptions` |
-| `examples/delayed-publish` | TTL-based delayed messages with `withDelayedPublish` |
-| `examples/rpc` | Request/response with `withRpcSupport`, `broker.request()`, `broker.addRpcListener()` |
-| `examples/bookstore` | Multi-service with `defineDomain`, `buildServiceTopology`, `withOperations`, `withOutboundExchange`, outbound exchange taps |
+| `examples/basic-pubsub` | Basic pub/sub with raw topology escape hatch |
+| `examples/bookstore` | Contract-driven multi-service demo with events, commands, RPC, and middleware |
 
-## Note on Experimental Packages
+## For Code Generation
 
-No packages are currently marked experimental. If any are added or marked experimental in the future, do not use or reference them unless explicitly asked.
+Read `ReadMe.LLM` — it has every type signature, function signature, naming convention, and usage example you need.
+
+## For Contributing
+
+Read `CLAUDE.md` — it has the architecture overview, build phases, coding conventions, and test requirements.
