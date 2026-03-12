@@ -1,6 +1,6 @@
 {
     "name": "hoppity-basic-pubsub-example",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "description": "Basic pub/sub example demonstrating core hoppity with subscriptions",
     "private": true,
     "scripts": {
