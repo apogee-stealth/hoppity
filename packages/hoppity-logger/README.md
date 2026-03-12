@@ -10,6 +10,8 @@ pnpm add @apogeelabs/hoppity-logger
 npm install @apogeelabs/hoppity-logger
 ```
 
+Peer dependencies: `@apogeelabs/hoppity`, `rascal@^20.1.1`.
+
 ## Usage
 
 ### Basic Custom Logger
@@ -46,7 +48,10 @@ class CustomLogger {
 }
 
 // Use with hoppity
-const broker = await hoppity.use(withCustomLogger({ logger: new CustomLogger() })).build();
+const broker = await hoppity
+    .service("my-service", { connection: { url: "amqp://localhost" } })
+    .use(withCustomLogger({ logger: new CustomLogger() }))
+    .build();
 ```
 
 ### Winston Logger Integration
@@ -77,7 +82,10 @@ const winstonLogger = {
     critical: (message: string, ...args: any[]) => logger.error(`[CRITICAL] ${message}`, ...args),
 };
 
-const broker = await hoppity.use(withCustomLogger({ logger: winstonLogger })).build();
+const broker = await hoppity
+    .service("my-service", { connection: { url: "amqp://localhost" } })
+    .use(withCustomLogger({ logger: winstonLogger }))
+    .build();
 ```
 
 ### Pino Logger Integration
@@ -108,7 +116,10 @@ const logger = {
     critical: (message: string, ...args: any[]) => pinoLogger.fatal(message, ...args),
 };
 
-const broker = await hoppity.use(withCustomLogger({ logger })).build();
+const broker = await hoppity
+    .service("my-service", { connection: { url: "amqp://localhost" } })
+    .use(withCustomLogger({ logger }))
+    .build();
 ```
 
 ## API
@@ -146,13 +157,13 @@ interface Logger {
 
 ```typescript
 const broker = await hoppity
+    .service("my-service", { connection: { url: "amqp://localhost" } })
     .use(withCustomLogger({ logger: customLogger })) // Apply early
-    .use(withDelayedPublish({ serviceName: "my-service", instanceId: "instance-1" }))
-    .use(
-        withRpcSupport({ serviceName: "my-service", instanceId: "instance-1", rpcExchange: "rpc" })
-    )
+    .use(myCustomMiddleware) // Uses the custom logger via context.logger
     .build();
 ```
+
+> **Note:** RPC and delayed delivery are built into core via `ServiceConfig` — no middleware needed for those features.
 
 ## License
 

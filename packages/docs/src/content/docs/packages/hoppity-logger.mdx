@@ -26,7 +26,12 @@ import hoppity from "@apogeelabs/hoppity";
 import { withCustomLogger } from "@apogeelabs/hoppity-logger";
 
 const broker = await hoppity
-    .withTopology(topology)
+    .service("my-service", {
+        connection: { url: "amqp://localhost" },
+        handlers: [
+            /* your handlers */
+        ],
+    })
     .use(withCustomLogger({ logger: myPinoLogger }))
     .use(otherMiddleware()) // this middleware will use myPinoLogger
     .build();

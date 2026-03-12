@@ -60,7 +60,12 @@ const logger: Logger = {
 };
 
 const broker = await hoppity
-    .withTopology(topology)
+    .service("my-service", {
+        connection: { url: "amqp://localhost" },
+        handlers: [
+            /* your handlers */
+        ],
+    })
     .use(withCustomLogger({ logger }))
     .use(otherMiddleware) // Will use the Winston logger via context.logger
     .build();
@@ -83,7 +88,10 @@ const logger: Logger = {
     critical: (msg, ...args) => pinoLogger.fatal(msg, ...args),
 };
 
-const broker = await hoppity.withTopology(topology).use(withCustomLogger({ logger })).build();
+const broker = await hoppity
+    .service("my-service", { connection: { url: "amqp://localhost" } })
+    .use(withCustomLogger({ logger }))
+    .build();
 ```
 
 ## How It Works
@@ -96,7 +104,7 @@ context.logger = options.logger;
 
 It sets the custom logger on the shared `MiddlewareContext`. The topology is returned unchanged. No `onBrokerCreated` callback is needed.
 
-All downstream middleware (RPC, delayed-publish, subscriptions, custom middleware) accesses `context.logger` for logging, so they'll automatically use whatever logger you inject here.
+All downstream middleware and the framework itself access `context.logger` for logging, so they'll automatically use whatever logger you inject here.
 
 ## Gotchas
 
