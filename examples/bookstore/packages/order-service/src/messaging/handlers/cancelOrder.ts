@@ -1,4 +1,4 @@
-import { onCommand } from "@apogeelabs/hoppity-operations";
+import { onCommand } from "@apogeelabs/hoppity";
 import { OrdersDomain } from "@bookstore/contracts";
 import { cancelOrder } from "../../store";
 import { logger } from "../../logger";

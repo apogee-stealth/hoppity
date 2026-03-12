@@ -1,19 +1,21 @@
-# Hoppity Basic Pub/Sub Example — LLM Usage Guide
+# Hoppity Basic Pub/Sub Example -- LLM Usage Guide
 
-Reference for LLMs generating code that uses hoppity for basic publish/subscribe messaging.
+Reference for LLMs generating code that uses hoppity's raw topology escape hatch for basic publish/subscribe messaging.
 
-## Pattern: Pub/Sub with Topic Exchange
+## Pattern: Raw Topology Pub/Sub
 
-This example demonstrates the simplest hoppity use case — one service publishes messages to a topic exchange, another service consumes them from a bound queue. No RPC, no delayed publish, no custom middleware.
+This example demonstrates the lowest-level hoppity path -- hand-written Rascal topology, no contracts, no handler declarations. One service publishes messages to a topic exchange, another consumes them from a bound queue using manual `broker.subscribe()`.
+
+This is the escape hatch for services that don't use `defineDomain` contracts. For the contract-driven approach (recommended for most services), see the [bookstore example](../bookstore/).
 
 ## Packages Used
 
 ```typescript
 import hoppity from "@apogeelabs/hoppity"; // Core builder
-import { withCustomLogger } from "@apogeelabs/hoppity-logger"; // Logger middleware
-import { withSubscriptions } from "@apogeelabs/hoppity-subscriptions"; // Subscription wiring
 import { BrokerConfig, BrokerAsPromised } from "rascal"; // Underlying broker types
 ```
+
+No other hoppity packages are needed. This example does not use `defineDomain`, `onEvent`, `onCommand`, `onRpc`, or any contract-driven APIs.
 
 ## Full Code Flow
 
@@ -40,6 +42,8 @@ export const config = {
 The publisher only needs the exchange and a publication. No queues, no bindings.
 
 ```typescript
+import { BrokerConfig } from "rascal";
+
 const publisherTopology: BrokerConfig = {
     vhosts: {
         [config.rabbitmq.vhost]: {
@@ -99,7 +103,6 @@ const subscriberTopology: BrokerConfig = {
             },
             subscriptions: {
                 on_event: {
-                    // This name is the key used in withSubscriptions()
                     queue: "event_queue",
                 },
             },
@@ -110,38 +113,48 @@ const subscriberTopology: BrokerConfig = {
 
 ### 4. Build Publisher Broker
 
+The publisher uses `hoppity.service()` with the raw topology escape hatch -- no `handlers` or `publishes` arrays.
+
 ```typescript
-const broker = await hoppity
-    .withTopology(publisherTopology)
-    .use(withCustomLogger({ logger })) // Optional: inject custom logger
+import hoppity from "@apogeelabs/hoppity";
+import { BrokerAsPromised } from "rascal";
+
+const broker: BrokerAsPromised = await hoppity
+    .service("basic-pubsub-publisher", {
+        connection: { url: "unused" }, // Connection is in the topology
+        topology: publisherTopology,
+        logger,
+    })
     .build();
 
 // Publish a message (publication name must match topology)
 await broker.publish("send_event", { id: 1, text: "hello" });
 ```
 
-### 5. Build Subscriber Broker
+Note: when passing a complete `BrokerConfig` as `topology`, the connection inside the topology takes precedence. The `connection` field in `ServiceConfig` is still required by the type, but its value is unused.
+
+### 5. Build Subscriber Broker and Wire Subscription
+
+The subscriber also uses the raw topology escape hatch, then manually subscribes via Rascal's `broker.subscribe()` API.
 
 ```typescript
-import { SubscriptionHandler } from "@apogeelabs/hoppity-subscriptions";
+const broker: BrokerAsPromised = await hoppity
+    .service("basic-pubsub-subscriber", {
+        connection: { url: "unused" },
+        topology: subscriberTopology,
+        logger,
+    })
+    .build();
 
-const messageHandler: SubscriptionHandler = async (_message, content, ackOrNack) => {
+// Wire subscription manually -- Rascal-level handler
+const sub = await broker.subscribe("on_event");
+sub.on("message", (message, content, ackOrNack) => {
     console.log("Received:", content);
     ackOrNack(); // Acknowledge the message
-};
-
-const broker = await hoppity
-    .withTopology(subscriberTopology)
-    .use(withCustomLogger({ logger })) // First: replace default logger
-    .use(
-        withSubscriptions({
-            // Last: wire handlers to subscriptions
-            on_event: messageHandler, // Key must match subscription name exactly
-        })
-    )
-    .build();
-// Subscriber is now consuming — no further setup needed
+});
 ```
+
+The handler signature is Rascal's native `(message, content, ackOrNack)` -- not a hoppity contract handler. `content` is the parsed message body (Rascal handles JSON deserialization). Call `ackOrNack()` with no args to acknowledge, or `ackOrNack(new Error("..."))` to reject.
 
 ### 6. Graceful Shutdown
 
@@ -161,28 +174,25 @@ process.on("SIGTERM", shutdown);
 | Exchange type        | `topic`             | Allows routing key pattern matching (`event.#` matches `event.created`, `event.updated`, etc.) |
 | Exchange durable     | `true`              | Survives RabbitMQ restarts                                                                     |
 | Queue durable        | `true`              | Messages survive restarts (with persistent delivery mode)                                      |
-| Binding key          | `event.#`           | `#` matches zero or more dot-separated words — catches all `event.*` messages                  |
+| Binding key          | `event.#`           | `#` matches zero or more dot-separated words -- catches all `event.*` messages                 |
 | Connection heartbeat | `10` seconds        | Detects dead connections faster than the default                                               |
 | Connection retry     | exponential backoff | Handles transient RabbitMQ unavailability                                                      |
 
-## Middleware Ordering
+## Custom Logger
 
-Order matters in the hoppity pipeline:
-
-1. **`withCustomLogger` first** — replaces `context.logger` so all downstream middleware (and hoppity internals) log through your logger
-2. **`withSubscriptions` last** — validates that handler keys match subscription names in the topology. If other middleware modifies the topology (adding subscriptions), those must run before `withSubscriptions`
+Pass `logger` directly in `ServiceConfig`. It takes effect before the build pipeline starts — no middleware ordering concerns.
 
 ## Name Mapping
 
 These names must be consistent across the codebase:
 
-| Name                            | Defined in          | Used in                                    |
-| ------------------------------- | ------------------- | ------------------------------------------ |
-| `"events"` (exchange)           | Both topologies     | Binding source                             |
-| `"event_queue"` (queue)         | Subscriber topology | Binding destination, subscription target   |
-| `"send_event"` (publication)    | Publisher topology  | `broker.publish("send_event", ...)`        |
-| `"on_event"` (subscription)     | Subscriber topology | `withSubscriptions({ on_event: handler })` |
-| `"event.created"` (routing key) | Publisher topology  | Matched by binding key `"event.#"`         |
+| Name                            | Defined in          | Used in                             |
+| ------------------------------- | ------------------- | ----------------------------------- |
+| `"events"` (exchange)           | Both topologies     | Binding source                      |
+| `"event_queue"` (queue)         | Subscriber topology | Binding destination, subscription   |
+| `"send_event"` (publication)    | Publisher topology  | `broker.publish("send_event", ...)` |
+| `"on_event"` (subscription)     | Subscriber topology | `broker.subscribe("on_event")`      |
+| `"event.created"` (routing key) | Publisher topology  | Matched by binding key `"event.#"`  |
 
 ## Adapting for Other Use Cases
 
@@ -212,11 +222,11 @@ subscriptions: {
     on_order_event: { queue: "order_queue" },
 }
 
-// withSubscriptions
-withSubscriptions({
-    on_user_event: handleUserEvent,
-    on_order_event: handleOrderEvent,
-})
+// Wire each subscription manually
+const userSub = await broker.subscribe("on_user_event");
+userSub.on("message", (msg, content, ackOrNack) => { handleUser(content); ackOrNack(); });
+const orderSub = await broker.subscribe("on_order_event");
+orderSub.on("message", (msg, content, ackOrNack) => { handleOrder(content); ackOrNack(); });
 ```
 
 ### Direct exchange (exact routing key match)
@@ -244,7 +254,7 @@ exchanges: {
     notifications: { type: "fanout", options: { durable: true } },
 }
 bindings: {
-    // No bindingKey needed — fanout ignores it
+    // No bindingKey needed -- fanout ignores it
     notify_email: { source: "notifications", destination: "email_queue", destinationType: "queue" },
     notify_sms: { source: "notifications", destination: "sms_queue", destinationType: "queue" },
 }
@@ -270,9 +280,8 @@ const logger: Logger = {
 
 ## Gotchas
 
-- Handler keys in `withSubscriptions()` must **exactly match** subscription names in the topology. `"event"` will not match `"on_event"`.
+- Subscription names in `broker.subscribe("on_event")` must **exactly match** subscription names in the topology. `"event"` will not match `"on_event"`.
 - The publisher does **not** need to declare queues or bindings. Only the subscriber side needs those.
 - Both sides should declare the same exchange with the same configuration. RabbitMQ will error if they declare the same exchange with **different** settings.
 - `ackOrNack()` with no arguments acknowledges the message. Call `ackOrNack(new Error("..."))` to reject.
-- `withSubscriptions` wires handlers during the `onBrokerCreated` phase — by the time `.build()` resolves, the subscriber is already consuming.
-- The `broker` (4th argument to `SubscriptionHandler`) is available if you need to publish from inside a handler.
+- When using the raw topology escape hatch, hoppity does not derive any topology. You are responsible for the complete Rascal `BrokerConfig`. This is intentional -- for the automatic path, use `defineDomain` contracts with `handlers` and `publishes` in `ServiceConfig`.

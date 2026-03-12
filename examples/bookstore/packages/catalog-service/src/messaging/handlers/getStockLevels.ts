@@ -1,4 +1,4 @@
-import { onRpc } from "@apogeelabs/hoppity-operations";
+import { onRpc } from "@apogeelabs/hoppity";
 import { CatalogDomain } from "@bookstore/contracts";
 import { getAllProducts } from "../../store";
 

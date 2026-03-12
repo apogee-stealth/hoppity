@@ -1,4 +1,4 @@
-import { defineDomain } from "@apogeelabs/hoppity-contracts";
+import { defineDomain } from "@apogeelabs/hoppity";
 import { z } from "zod";
 
 /**

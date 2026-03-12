@@ -37,15 +37,11 @@ The repository is organized as a monorepo with the following structure:
 ```
 hoppity/
 ├── packages/                    # Core packages
-│   ├── hoppity/                 # Main hoppity package
-│   ├── hoppity-delayed-publish/ # Wait/ready queue pair for delayed message handling
-│   ├── hoppity-logger/          # Custom logger injection (Winston, Pino, etc.)
-│   ├── hoppity-rpc/             # RPC topology and behavior(s)
-│   └── hoppity-subscriptions/   # Auto-subscribing by matching subscriptions with named handlers
+│   ├── hoppity/                 # Core — contracts, handlers, topology derivation, broker wiring
+│   └── docs/                    # Astro docs site
 ├── examples/                    # Example applications
-│   ├── basic-pubsub/            # Basic pub/sub with core hoppity and subscriptions
-│   ├── delayed-publish/         # Delayed publishing and subscriptions
-│   └── rpc/                     # RPC pattern usage
+│   ├── basic-pubsub/            # Basic pub/sub with raw topology escape hatch
+│   └── bookstore/               # Contract-driven multi-service demo (events, RPC, middleware)
 ├── integration-tests/           # Integration tests (Testcontainers + RabbitMQ)
 └── docker-compose.yml           # RabbitMQ for local development
 ```
@@ -132,9 +128,8 @@ pnpm format
 
 Each example has its own `docker-compose.yml` for spinning up RabbitMQ (or you can use the one at the repo root). See individual example READMEs for setup instructions:
 
-- [basic-pubsub](./examples/basic-pubsub/README.md) — Basic pub/sub with core hoppity and subscriptions
-- [delayed-publish](./examples/delayed-publish/README.md) — Delayed publishing and subscriptions
-- [rpc](./examples/rpc/README.md) — RPC pattern usage
+- [basic-pubsub](./examples/basic-pubsub/README.md) — Basic pub/sub with raw topology escape hatch
+- [bookstore](./examples/bookstore/README.md) — Contract-driven multi-service demo
 
 ## Integration Tests
 

@@ -15,9 +15,7 @@
         "lint": "eslint --config ../../.eslintrc.js 'src/**/*.{ts,tsx}'"
     },
     "dependencies": {
-        "@apogeelabs/hoppity": "file:../../packages/hoppity",
-        "@apogeelabs/hoppity-subscriptions": "file:../../packages/hoppity-subscriptions",
-        "@apogeelabs/hoppity-logger": "file:../../packages/hoppity-logger",
+        "@apogeelabs/hoppity": "workspace:*",
         "rascal": "^20.1.1",
         "dotenv": "^16.3.1"
     },

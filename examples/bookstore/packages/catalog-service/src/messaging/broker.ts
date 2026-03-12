@@ -1,39 +1,35 @@
-import hoppity from "@apogeelabs/hoppity";
-import { withCustomLogger } from "@apogeelabs/hoppity-logger";
-import { withOperations, type OperationsBroker } from "@apogeelabs/hoppity-operations";
-import { randomUUID } from "crypto";
+import hoppity, { ServiceBroker } from "@apogeelabs/hoppity";
 import { logger } from "../logger";
+import { config } from "../config";
 import { getStockLevelsHandler } from "./handlers/getStockLevels";
 import { onOrderCancelledHandler } from "./handlers/onOrderCancelled";
 import { onOrderCreatedHandler } from "./handlers/onOrderCreated";
-import { topology } from "./topology";
 
-let brokerInstance: OperationsBroker | null = null;
+let brokerInstance: ServiceBroker | null = null;
 
 /**
  * Singleton factory for the catalog-service broker.
  *
- * Middleware stack:
- *  1. withCustomLogger — ensures all downstream middleware uses the service logger
- *  2. withOperations — wires event handlers (orderCreated, orderCancelled) and
- *     the getStockLevels RPC handler; extends broker with typed outbound methods
+ * Handlers and topology are derived automatically from the handlers array —
+ * no topology.ts file required.
  */
-export async function getBroker(): Promise<OperationsBroker> {
+export async function getBroker(): Promise<ServiceBroker> {
     if (brokerInstance) {
         return brokerInstance;
     }
 
-    brokerInstance = (await hoppity
-        .withTopology(topology)
-        .use(withCustomLogger({ logger }))
-        .use(
-            withOperations({
-                serviceName: "catalog-service",
-                instanceId: randomUUID(),
-                handlers: [onOrderCreatedHandler, onOrderCancelledHandler, getStockLevelsHandler],
-            })
-        )
-        .build()) as OperationsBroker;
+    brokerInstance = await hoppity
+        .service("catalog-service", {
+            connection: {
+                url: config.rabbitmq.url,
+                vhost: config.rabbitmq.vhost,
+                options: { heartbeat: 10 },
+                retry: { factor: 2, min: 1000, max: 5000 },
+            },
+            handlers: [onOrderCreatedHandler, onOrderCancelledHandler, getStockLevelsHandler],
+            logger,
+        })
+        .build();
 
     return brokerInstance;
 }
