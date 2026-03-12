@@ -7,7 +7,7 @@ title: "onRpc"
 
 > **onRpc**\<`TReq`, `TRes`\>(`contract`, `handler`, `options?`): [`RpcHandlerDeclaration`](/hoppity/api/interfaces/rpchandlerdeclaration/)
 
-Defined in: [packages/hoppity/src/handlers/onRpc.ts:15](https://github.com/apogee-travel/hoppity/blob/c9712023a65181fbb268e1d6f167364721040374/packages/hoppity/src/handlers/onRpc.ts#L15)
+Defined in: [packages/hoppity/src/handlers/onRpc.ts:15](https://github.com/apogee-travel/hoppity/blob/e9908d31bdf13724b2a0a46d1d098f3a0fff92ad/packages/hoppity/src/handlers/onRpc.ts#L15)
 
 Declares a typed RPC handler for use in the service config handlers array.
 

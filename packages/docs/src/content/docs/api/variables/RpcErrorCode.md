@@ -7,7 +7,7 @@ title: "RpcErrorCode"
 
 > `const` **RpcErrorCode**: `object`
 
-Defined in: [packages/hoppity/src/broker/rpc.ts:31](https://github.com/apogee-travel/hoppity/blob/c9712023a65181fbb268e1d6f167364721040374/packages/hoppity/src/broker/rpc.ts#L31)
+Defined in: [packages/hoppity/src/broker/rpc.ts:31](https://github.com/apogee-travel/hoppity/blob/e9908d31bdf13724b2a0a46d1d098f3a0fff92ad/packages/hoppity/src/broker/rpc.ts#L31)
 
 ## Type Declaration
 

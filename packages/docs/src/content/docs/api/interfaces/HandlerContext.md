@@ -5,7 +5,7 @@ prev: false
 title: "HandlerContext"
 ---
 
-Defined in: [packages/hoppity/src/handlers/types.ts:46](https://github.com/apogee-travel/hoppity/blob/c9712023a65181fbb268e1d6f167364721040374/packages/hoppity/src/handlers/types.ts#L46)
+Defined in: [packages/hoppity/src/handlers/types.ts:46](https://github.com/apogee-travel/hoppity/blob/e9908d31bdf13724b2a0a46d1d098f3a0fff92ad/packages/hoppity/src/handlers/types.ts#L46)
 
 Context object passed to every handler invocation.
 Gives handlers typed access to the broker for outbound operations.
@@ -16,4 +16,4 @@ Gives handlers typed access to the broker for outbound operations.
 
 > **broker**: `HandlerContextBroker`
 
-Defined in: [packages/hoppity/src/handlers/types.ts:47](https://github.com/apogee-travel/hoppity/blob/c9712023a65181fbb268e1d6f167364721040374/packages/hoppity/src/handlers/types.ts#L47)
+Defined in: [packages/hoppity/src/handlers/types.ts:47](https://github.com/apogee-travel/hoppity/blob/e9908d31bdf13724b2a0a46d1d098f3a0fff92ad/packages/hoppity/src/handlers/types.ts#L47)
