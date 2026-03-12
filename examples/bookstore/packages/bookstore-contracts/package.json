@@ -9,7 +9,7 @@
         "lint": "eslint --config ../../../../.eslintrc.js 'src/**/*.{ts,tsx}'"
     },
     "dependencies": {
-        "@apogeelabs/hoppity-contracts": "workspace:*",
+        "@apogeelabs/hoppity": "workspace:*",
         "zod": "^3.22.0"
     },
     "devDependencies": {

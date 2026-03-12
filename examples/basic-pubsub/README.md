@@ -1,15 +1,22 @@
 # Hoppity Basic Pub/Sub Example
 
-The simplest hoppity example — a publisher sends messages to an exchange, a subscriber consumes them from a queue. No RPC, no delayed publish, just the core middleware pipeline.
+The simplest hoppity example -- a publisher sends messages to an exchange, a subscriber consumes them from a queue. No contracts, no RPC, no delayed publish. This example uses the raw topology escape hatch and manual Rascal subscription wiring to demonstrate the lowest-level way to use hoppity.
 
 ## What This Demonstrates
 
-- `withTopology().use().build()` — the hoppity builder pattern
-- `withCustomLogger()` — injecting a custom logger via `hoppity-logger`
-- `withSubscriptions()` — auto-wiring subscription handlers via `hoppity-subscriptions`
+- `hoppity.service(name, { topology })` -- the raw topology escape hatch (no contract-driven derivation)
+- `withCustomLogger()` -- injecting a custom logger via `@apogeelabs/hoppity-logger`
+- Manual `broker.subscribe()` -- wiring subscription handlers directly via Rascal's API
 - Rascal topology configuration (exchanges, queues, bindings, publications, subscriptions)
-- Separate publisher/subscriber topologies — each service declares only what it needs
+- Separate publisher/subscriber topologies -- each service declares only what it needs
 - Graceful shutdown with `broker.shutdown()`
+
+## What This Does NOT Demonstrate
+
+- `defineDomain` / contracts -- see the [bookstore example](../bookstore/) for that
+- `onEvent`, `onCommand`, `onRpc` handler declarations
+- Automatic topology derivation from handlers and publishes
+- RPC or command patterns
 
 ## Prerequisites
 
@@ -23,7 +30,7 @@ The simplest hoppity example — a publisher sends messages to an exchange, a su
 # Start RabbitMQ
 docker compose up -d
 
-# Copy environment template (optional — defaults work out of the box)
+# Copy environment template (optional -- defaults work out of the box)
 cp env.example .env
 
 # Install dependencies (from repo root)
@@ -56,13 +63,15 @@ Messages publish every 3 seconds by default (configurable via `PUBLISH_INTERVAL`
 
 ## What to Look For in the Code
 
-1. **Topology separation** (`src/publisher/messaging/topology.ts` vs `src/subscriber/messaging/topology.ts`) — the publisher only declares the exchange and publication; the subscriber declares the exchange, queue, binding, and subscription. Both declare the same exchange because RabbitMQ declarations are idempotent.
+1. **Raw topology escape hatch** (`src/publisher/messaging/broker.ts`, `src/subscriber/messaging/broker.ts`) -- both services use `hoppity.service(name, { connection, topology })` with no `handlers` or `publishes` arrays. The topology is a hand-written Rascal `BrokerConfig` passed directly. This is the path for services that don't use hoppity's contract-driven API.
 
-2. **Middleware ordering** (`src/subscriber/messaging/broker.ts`) — `withCustomLogger` runs first so downstream middleware logs through the custom logger. `withSubscriptions` runs last because it validates handler keys against the finalized topology.
+2. **Topology separation** (`src/publisher/messaging/topology.ts` vs `src/subscriber/messaging/topology.ts`) -- the publisher only declares the exchange and publication; the subscriber declares the exchange, queue, binding, and subscription. Both declare the same exchange because RabbitMQ declarations are idempotent.
 
-3. **Subscription name mapping** — the subscription name `on_event` in the topology must exactly match the key in `withSubscriptions({ on_event: messageHandler })`. This is how hoppity-subscriptions wires handlers to queues.
+3. **Manual subscription wiring** (`src/subscriber/messaging/broker.ts`) -- after `.build()` resolves, the subscriber calls `broker.subscribe("on_event")` and wires the message handler via Rascal's `sub.on("message", ...)` API. This is the manual equivalent of what hoppity's `onEvent`/`onCommand`/`onRpc` handlers do automatically in the contract-driven path.
 
-4. **Message handler** (`src/subscriber/messaging/handlers/messageHandler.ts`) — receives parsed content (Rascal handles JSON deserialization) and calls `ackOrNack()` to acknowledge.
+4. **Message handler** (`src/subscriber/messaging/handlers/messageHandler.ts`) -- receives the raw AMQP message, parsed content (Rascal handles JSON deserialization), and an `ackOrNack` callback. This is a Rascal-level handler, not a hoppity contract handler.
+
+5. **Middleware ordering** -- `withCustomLogger` runs first so hoppity internals and any downstream middleware log through the custom logger.
 
 ## Architecture
 
@@ -86,15 +95,15 @@ src/
 ├── publisher/
 │   ├── index.ts                   # Publisher entry point
 │   └── messaging/
-│       ├── topology.ts            # Exchange + publication
-│       └── broker.ts              # Hoppity builder
+│       ├── topology.ts            # Exchange + publication (raw Rascal BrokerConfig)
+│       └── broker.ts              # hoppity.service() with raw topology
 └── subscriber/
     ├── index.ts                   # Subscriber entry point
     └── messaging/
-        ├── topology.ts            # Exchange + queue + binding + subscription
-        ├── broker.ts              # Hoppity builder with withSubscriptions
+        ├── topology.ts            # Exchange + queue + binding + subscription (raw Rascal BrokerConfig)
+        ├── broker.ts              # hoppity.service() with raw topology + manual subscribe()
         └── handlers/
-            └── messageHandler.ts  # Message handler
+            └── messageHandler.ts  # Rascal-level message handler
 ```
 
 ## Configuration

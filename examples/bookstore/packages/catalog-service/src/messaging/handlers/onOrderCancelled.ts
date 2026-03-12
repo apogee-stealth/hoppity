@@ -1,4 +1,4 @@
-import { onEvent } from "@apogeelabs/hoppity-operations";
+import { onEvent } from "@apogeelabs/hoppity";
 import { OrdersDomain } from "@bookstore/contracts";
 import { restoreStock } from "../../store";
 import { logger } from "../../logger";

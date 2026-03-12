@@ -1,5 +1,4 @@
 import { getBroker } from "./messaging/broker";
-import { awaitTapEvent } from "./messaging/tapHandler";
 import { spawnService, killAll } from "./processManager";
 import { config } from "./config";
 import {
@@ -19,18 +18,18 @@ import { OrdersDomain, CatalogDomain } from "@bookstore/contracts";
  * Bookstore Demo Runner
  *
  * Spawns order-service and catalog-service, then executes a scripted flow
- * demonstrating contracts, typed operations, and the outbound exchange tap.
+ * demonstrating contracts and typed operations.
  *
  * Set 1 — Create & Query:
  *   createOrder (RPC) → orderCreated (event) → getOrderSummary (RPC)
  *
  * Set 2 — Cancel & Query:
  *   cancelOrder (command) → orderCancelled (event) → getOrderSummary (RPC)
+ *
+ * Note: v1 removed the outbound tap exchange, so event observation is replaced
+ * with a brief pause to allow catalog-service time to process the event before
+ * querying stock levels.
  */
-
-// Routing keys derived from the OrdersDomain contracts (orders.{opType}.{snake_name})
-const ROUTING_KEY_ORDER_CREATED = OrdersDomain.events.orderCreated.routingKey;
-const ROUTING_KEY_ORDER_CANCELLED = OrdersDomain.events.orderCancelled.routingKey;
 
 async function pause(ms: number): Promise<void> {
     return new Promise(resolve => setTimeout(resolve, ms));
@@ -38,7 +37,7 @@ async function pause(ms: number): Promise<void> {
 
 async function main(): Promise<void> {
     console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-    console.log("  Bookstore Example — Hoppity Contracts + Operations Demo");
+    console.log("  Bookstore Example — Hoppity v1 Contract-Driven Demo");
     console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
     console.log("");
 
@@ -100,12 +99,6 @@ async function main(): Promise<void> {
         // SET 1: Create & Query
         // ───────────────────────────────────────────────────────────
 
-        // Register the tap waiter BEFORE sending the RPC. createOrder publishes
-        // an orderCreated event as a side effect — if we awaited the RPC first
-        // and then registered the waiter, the event could arrive on the tap queue
-        // before we're listening, and we'd hang forever waiting for it.
-        const orderCreatedPromise = awaitTapEvent(ROUTING_KEY_ORDER_CREATED);
-
         printStepHeader(1, "Create Order (RPC)");
         printSend("createOrder RPC → order-service");
         const createdOrder = await broker.request(OrdersDomain.rpc.createOrder, {
@@ -120,13 +113,12 @@ async function main(): Promise<void> {
 
         const orderId = createdOrder.orderId;
 
-        printStepHeader(2, "Order Created Event (via outbound tap)");
-        printSend("Waiting for orderCreated event on outbound tap...");
-        await orderCreatedPromise;
+        printStepHeader(2, "Order Created Event (waiting for catalog-service)");
+        printSend("Pausing to allow catalog-service to process orderCreated...");
+        // Give catalog-service time to receive and process the orderCreated event
+        // before querying stock. Without the outbound tap, we use a timed pause.
+        await pause(2000);
         printEvent(`catalog-service received orderCreated — stock decremented`);
-
-        // Give catalog-service a moment to finish processing before querying stock
-        await pause(1500);
 
         const stockAfterCreate = await broker.request(CatalogDomain.rpc.getStockLevels, {});
         printStockLevels(
@@ -148,20 +140,16 @@ async function main(): Promise<void> {
         // SET 2: Cancel & Query
         // ───────────────────────────────────────────────────────────
 
-        // Same race-prevention pattern as Set 1 — register before sending.
-        const orderCancelledPromise = awaitTapEvent(ROUTING_KEY_ORDER_CANCELLED);
-
         printStepHeader(4, "Cancel Order (Command)");
         printCommand(`cancelOrder command → order-service (orderId: ${orderId})`);
         await broker.sendCommand(OrdersDomain.commands.cancelOrder, { orderId });
         printReceive("Command sent (fire-and-forget)");
 
-        printStepHeader(5, "Order Cancelled Event (via outbound tap)");
-        printSend("Waiting for orderCancelled event on outbound tap...");
-        await orderCancelledPromise;
+        printStepHeader(5, "Order Cancelled Event (waiting for catalog-service)");
+        printSend("Pausing to allow catalog-service to process orderCancelled...");
+        // Same timed-pause approach as step 2
+        await pause(2000);
         printEvent(`catalog-service received orderCancelled — stock restored`);
-
-        await pause(1500);
 
         const stockAfterCancel = await broker.request(CatalogDomain.rpc.getStockLevels, {});
         printStockLevels(
