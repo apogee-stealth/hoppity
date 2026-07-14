@@ -238,6 +238,11 @@ function addRpcCaller(vhost: any, contract: RpcContract): void {
     vhost.publications[publicationName] = {
         exchange,
         routingKey,
+        // Confirm channel is required for Rascal to surface the `return` event when a
+        // mandatory RPC request is unroutable (no responder queue bound). Without it,
+        // Rascal releases the channel synchronously after publish and the async
+        // basic.return is missed. See broker/rpc.ts request().
+        confirm: true,
     };
 }
 
