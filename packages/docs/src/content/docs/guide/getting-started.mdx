@@ -117,6 +117,35 @@ const summary = await broker.request(OrdersDomain.rpc.getOrderSummary, {
 await broker.shutdown();
 ```
 
+## Handling RPC Errors
+
+`broker.request()` rejects with an `RpcError` that carries a `code` you can switch on:
+
+```typescript
+import { RpcError, RpcErrorCode } from "@apogeelabs/hoppity";
+
+try {
+    const summary = await broker.request(OrdersDomain.rpc.getOrderSummary, {
+        orderId: "ord-123",
+    });
+} catch (err) {
+    if (err instanceof RpcError) {
+        switch (err.code) {
+            case RpcErrorCode.HANDLER_ERROR:
+                break; // the remote responder threw
+            case RpcErrorCode.TIMEOUT:
+                break; // no response within defaultTimeout
+            case RpcErrorCode.CANCELLED:
+                break; // broker.cancelRequest() was called
+            case RpcErrorCode.NO_RESPONDER:
+                break; // unroutable — no responder queue bound; fails fast
+        }
+    }
+}
+```
+
+`NO_RESPONDER` comes back immediately (via the AMQP `mandatory` flag) when a request routes to no queue — for example when no responder service is deployed — so you fail fast instead of waiting out the timeout. A responder whose durable queue exists but is currently offline still routes into that queue and surfaces as `TIMEOUT`.
+
 ## Next Steps
 
 - Read the [Concepts](/hoppity/guide/concepts/) guide for a deep dive into middleware, the seven build phases, and naming conventions
