@@ -353,6 +353,8 @@ try {
                 break; // request timed out
             case RpcErrorCode.CANCELLED:
                 break; // cancelRequest() was called
+            case RpcErrorCode.NO_RESPONDER:
+                break; // unroutable — no responder queue bound (fails fast, no timeout wait)
         }
     }
 }
@@ -449,5 +451,6 @@ const broker = (await builder.build()) as BrokerWithExtensions<[{ customMethod: 
 - Context mutations in `context.data` are permanent and visible to all downstream middleware.
 - Event/command handlers auto-ack on success, nack without requeue on error.
 - RPC handler errors are sent back to the caller as `RpcErrorCode.HANDLER_ERROR`.
+- Unroutable RPC requests (no responder queue bound) reject fast with `RpcErrorCode.NO_RESPONDER` via the `mandatory` flag, instead of waiting out the timeout.
 - Inbound Zod validation failures (when `validateInbound: true`) nack without requeue.
 - `publishes` must include any contract you want to call `publishEvent`, `sendCommand`, or `request` on. The topology won't include the publication otherwise.

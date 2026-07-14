@@ -387,9 +387,10 @@ const RpcErrorCode = {
     HANDLER_ERROR: "RPC_HANDLER_ERROR",
     TIMEOUT:       "RPC_TIMEOUT",
     CANCELLED:     "RPC_CANCELLED",
+    NO_RESPONDER:  "RPC_NO_RESPONDER",
 } as const;
 
-type RpcErrorCodeValue = "RPC_HANDLER_ERROR" | "RPC_TIMEOUT" | "RPC_CANCELLED";
+type RpcErrorCodeValue = "RPC_HANDLER_ERROR" | "RPC_TIMEOUT" | "RPC_CANCELLED" | "RPC_NO_RESPONDER";
 
 class RpcError extends Error {
     readonly code: RpcErrorCodeValue | string;
@@ -1083,6 +1084,10 @@ try {
             case RpcErrorCode.CANCELLED:
                 // broker.cancelRequest(correlationId) was called
                 break;
+            case RpcErrorCode.NO_RESPONDER:
+                // Request was unroutable — no responder queue bound (e.g. no responder
+                // service deployed). Fails fast instead of waiting for the timeout.
+                break;
         }
     }
 }
@@ -1092,6 +1097,7 @@ try {
 
 - Event/command handlers: nack without requeue on error — message goes to dead-letter exchange if configured, otherwise dropped.
 - RPC handlers: error response published back to caller with `RpcErrorCode.HANDLER_ERROR`.
+- RPC requests publish with the AMQP `mandatory` flag: an unroutable request (no responder queue bound) rejects immediately with `RpcErrorCode.NO_RESPONDER` instead of waiting for the timeout. A responder whose durable queue exists but is currently offline still times out.
 - Inbound Zod validation failures (when `validateInbound: true`): nack without requeue + error logged.
 
 ---
