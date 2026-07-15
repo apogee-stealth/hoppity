@@ -1,4 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+import { EventEmitter } from "events";
 
 export default {};
 
@@ -39,7 +40,9 @@ describe("hoppity > broker > rpc", () => {
         };
 
         mockBrokerSubscribe.mockResolvedValue(mockSubscription);
-        mockBrokerPublish.mockResolvedValue(undefined);
+        // publish() resolves to a Rascal PublicationSession (an EventEmitter). request()
+        // attaches a `return` listener to it, so the mock must return an emitter.
+        mockBrokerPublish.mockImplementation(() => Promise.resolve(new EventEmitter()));
         mockBrokerShutdown.mockResolvedValue(undefined);
     });
 
@@ -594,6 +597,74 @@ describe("hoppity > broker > rpc", () => {
 
             it("should call responseSchema.parse with the response for inbound validation", () => {
                 expect(mockResponseSchema.parse).toHaveBeenCalledWith({ burgerId: "w-999" });
+            });
+        });
+
+        describe("when the RPC request is returned as unroutable (no responder)", () => {
+            let wireRpcOutboundFn: typeof import("./rpc").wireRpcOutbound;
+            let RpcErrorClass: typeof import("./rpc").RpcError;
+            let session: EventEmitter;
+            let capturedError: any;
+
+            beforeEach(async () => {
+                ({ wireRpcOutbound: wireRpcOutboundFn, RpcError: RpcErrorClass } = await import(
+                    "./rpc"
+                ));
+
+                session = new EventEmitter();
+                mockBrokerPublish.mockResolvedValue(session);
+                // Keep the request pending so the `return` event is what settles it.
+                mockCorrelationManager.addRequest.mockReturnValue(new Promise(() => {}));
+                mockCorrelationManager.rejectRequest.mockImplementation((_id: string, err: any) => {
+                    capturedError = err;
+                    return true;
+                });
+
+                await wireRpcOutboundFn(mockBroker, {
+                    serviceName: "test-service",
+                    instanceId: "test-id",
+                    replyQueueName: "test-service_test-id_reply",
+                    correlationManager: mockCorrelationManager,
+                    defaultTimeout: 5000,
+                    validateInbound: false,
+                    validateOutbound: false,
+                    logger: mockLogger,
+                });
+
+                const contract: any = {
+                    publicationName: "grub_rpc_order_taco",
+                    requestSchema: { parse: jest.fn() },
+                    responseSchema: { parse: jest.fn() },
+                    _domain: "grub",
+                    _name: "orderTaco",
+                };
+
+                // Fire the request but don't await it — it stays pending until the
+                // simulated broker `return` rejects it.
+                (mockBroker as any).request(contract, { size: "large" }).catch(() => {});
+                // Let request() attach its `return` listener, then simulate the broker
+                // returning the message as unroutable.
+                await new Promise(resolve => setImmediate(resolve));
+                session.emit("return", { fields: {}, properties: {} });
+            });
+
+            it("should publish the request with the mandatory flag set", () => {
+                expect(mockBrokerPublish).toHaveBeenCalledWith(
+                    "grub_rpc_order_taco",
+                    expect.any(Object),
+                    expect.objectContaining({
+                        options: expect.objectContaining({ mandatory: true }),
+                    })
+                );
+            });
+
+            it("should reject the pending request with a NO_RESPONDER RpcError", () => {
+                expect(mockCorrelationManager.rejectRequest).toHaveBeenCalledWith(
+                    expect.any(String),
+                    expect.any(RpcErrorClass)
+                );
+                expect(capturedError).toBeInstanceOf(RpcErrorClass);
+                expect(capturedError.code).toBe("RPC_NO_RESPONDER");
             });
         });
 

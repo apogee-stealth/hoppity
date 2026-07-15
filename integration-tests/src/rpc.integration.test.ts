@@ -18,6 +18,17 @@ const TestRpcDomain = defineDomain("rpc_test", {
     },
 });
 
+// A domain no test ever registers a responder for — so its RPC exchange exists
+// (declared by the caller) but has no bound queue. Used for the mandatory/no-responder test.
+const NoResponderDomain = defineDomain("rpc_noresponder_test", {
+    rpc: {
+        shout: {
+            request: z.object({ message: z.string() }),
+            response: z.object({ echoed: z.string() }),
+        },
+    },
+});
+
 function makeConnection() {
     const topology = createTestTopology();
     const rawVhost = (topology.vhosts as any)["/"];
@@ -151,6 +162,44 @@ describe("rpc: request/response round-trip", () => {
 
         it("should return correct results for each request", () => {
             expect(results).toEqual([{ sum: 5 }, { sum: 42 }, { sum: 8984 }]);
+        });
+    });
+});
+
+describe("rpc: request to a domain with no responder", () => {
+    describe("when no responder queue has ever been declared for the domain", () => {
+        let requesterBroker: ServiceBroker;
+        let rpcError: any;
+
+        beforeAll(async () => {
+            // Requester only — declares the RPC exchange but nothing binds a queue to it.
+            // With the mandatory flag, the broker returns the unroutable request and the
+            // caller fails fast (NO_RESPONDER) instead of waiting out defaultTimeout.
+            requesterBroker = await hoppity
+                .service("rpc-noresponder-requester", {
+                    connection: makeConnection(),
+                    publishes: [NoResponderDomain.rpc.shout],
+                    defaultTimeout: 5_000,
+                    logger: silentLogger,
+                })
+                .build();
+
+            try {
+                await requesterBroker.request(NoResponderDomain.rpc.shout, {
+                    message: "IS_ANYONE_LISTENING",
+                });
+            } catch (err) {
+                rpcError = err;
+            }
+        }, 30_000);
+
+        afterAll(async () => {
+            if (requesterBroker) await requesterBroker.shutdown();
+        });
+
+        it("should reject with a NO_RESPONDER error rather than a timeout", () => {
+            expect(rpcError).toBeDefined();
+            expect(rpcError.code).toBe("RPC_NO_RESPONDER");
         });
     });
 });

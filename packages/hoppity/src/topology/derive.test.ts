@@ -264,10 +264,12 @@ describe("hoppity > topology > deriveTopology", () => {
             expect(result.vhosts["/grub"].exchanges["grub_rpc"]).toBeDefined();
         });
 
-        it("should add the rpc caller publication", () => {
+        it("should add the rpc caller publication with a confirm channel", () => {
             expect(result.vhosts["/grub"].publications["grub_rpc_order_burger"]).toEqual({
                 exchange: "grub_rpc",
                 routingKey: "grub.rpc.order_burger",
+                // confirm channel is required for the mandatory-flag `return` event
+                confirm: true,
             });
         });
 

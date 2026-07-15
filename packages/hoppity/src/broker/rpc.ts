@@ -32,6 +32,7 @@ export const RpcErrorCode = {
     HANDLER_ERROR: "RPC_HANDLER_ERROR",
     TIMEOUT: "RPC_TIMEOUT",
     CANCELLED: "RPC_CANCELLED",
+    NO_RESPONDER: "RPC_NO_RESPONDER",
 } as const;
 
 export type RpcErrorCodeValue = (typeof RpcErrorCode)[keyof typeof RpcErrorCode];
@@ -304,11 +305,28 @@ export async function wireRpcOutbound(
         // The outbound wrapper wraps the publish of the RpcRequest envelope.
         // Interceptors can inject traceparent headers into overrides here.
         const publish = composeOutboundWrappers(
-            async (rpcRequest, ovr) =>
-                broker.publish(contract.publicationName, rpcRequest, {
+            async (rpcRequest, ovr) => {
+                // `mandatory` makes the broker return the request instead of dropping it
+                // when it routes to no queue (no responder declared). We reject the pending
+                // request immediately on `return` rather than waiting out the timeout.
+                // Note: this only catches "no responder queue bound" (e.g. no responder
+                // service deployed) — a responder whose durable queue exists but is
+                // currently offline still routes and falls through to the timeout.
+                const session = await broker.publish(contract.publicationName, rpcRequest, {
                     ...ovr,
-                    options: { persistent: false, ...ovr?.options },
-                }),
+                    options: { persistent: false, mandatory: true, ...ovr?.options },
+                });
+                session.on("return", () =>
+                    correlationManager.rejectRequest(
+                        correlationId,
+                        new RpcError(
+                            `No responder for RPC '${contract._domain}.${contract._name}' — request was unroutable (no responder queue bound)`,
+                            RpcErrorCode.NO_RESPONDER
+                        )
+                    )
+                );
+                return session;
+            },
             interceptors,
             meta
         );

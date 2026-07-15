@@ -1,5 +1,11 @@
 # @apogeelabs/hoppity
 
+## 1.0.0
+
+### Major Changes
+
+- Hoppity 1.0 and debut of hoppity-open-telemetry
+
 ## 0.3.0
 
 ### Minor Changes

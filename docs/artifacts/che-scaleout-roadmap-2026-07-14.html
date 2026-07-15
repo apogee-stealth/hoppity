@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Hoppity CHE Scale-Out Roadmap</title>
+<style>
+  :root {
+    --bg: #fafafa; --surface: #ffffff; --surface-2: #f2f2f7;
+    --text: #1a1a2e; --muted: #5a5a6e; --border: #e4e4ec;
+    --b: #0f9d8c; --b-soft: #0f9d8c22;
+    --c: #6d5ce7; --c-soft: #6d5ce722;
+    --danger: #b04a4a; --warn: #b9791f; --ok: #2f8f5b;
+    --radius: 12px; --unit: 8px;
+    --mono: 'SF Mono','Fira Code','Cascadia Code',ui-monospace,monospace;
+    --sans: -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #1a1a2e; --surface: #24243a; --surface-2: #2c2c46;
+      --text: #e8e8f0; --muted: #a2a2bc; --border: #34344e;
+      --b: #35c2ae; --b-soft: #35c2ae22;
+      --c: #9d8cf0; --c-soft: #9d8cf022;
+      --danger: #e08a8a; --warn: #e0a94a; --ok: #57c98a;
+    }
+  }
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    margin: 0; background: var(--bg); color: var(--text);
+    font-family: var(--sans); font-size: 16px; line-height: 1.6;
+    padding: calc(var(--unit)*4) var(--unit);
+  }
+  .wrap { max-width: 1180px; margin: 0 auto; }
+  header.page { margin-bottom: calc(var(--unit)*4); }
+  h1 { font-size: 1.9rem; line-height: 1.2; margin: 0 0 var(--unit); letter-spacing: -0.02em; }
+  h2 { font-size: 1.35rem; margin: calc(var(--unit)*5) 0 var(--unit); letter-spacing: -0.01em; }
+  h3 { font-size: 1.05rem; margin: 0 0 var(--unit); }
+  p { margin: 0 0 var(--unit); }
+  .sub { color: var(--muted); font-size: 1rem; }
+  .meta { color: var(--muted); font-size: 0.85rem; margin-top: var(--unit); }
+  code { font-family: var(--mono); font-size: 0.86em; background: var(--surface-2);
+    padding: 1px 5px; border-radius: 5px; }
+  a { color: var(--c); text-decoration: none; border-bottom: 1px solid transparent; }
+  a:hover { border-bottom-color: currentColor; }
+  section { margin-bottom: calc(var(--unit)*2); }
+
+  .pill { display: inline-flex; align-items: center; gap: 6px; font-size: 0.8rem;
+    font-weight: 600; padding: 3px 10px; border-radius: 999px;
+    background: var(--c-soft); color: var(--c); }
+  .dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+
+  .card { background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: calc(var(--unit)*3); }
+  .callout { border-left: 3px solid var(--warn); background: var(--surface);
+    border-radius: 0 var(--radius) var(--radius) 0; padding: calc(var(--unit)*2) calc(var(--unit)*3);
+    margin: calc(var(--unit)*2) 0; }
+
+  .flow { display: grid; grid-template-columns: 1fr 1fr; gap: calc(var(--unit)*2); margin-top: var(--unit); }
+  @media (max-width: 720px) { .flow { grid-template-columns: 1fr; } }
+  .flow .lane { background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: calc(var(--unit)*2); }
+  .flow .lane h4 { margin: 0 0 var(--unit); font-size: 0.95rem; }
+  .chain { font-family: var(--mono); font-size: 0.82rem; color: var(--muted);
+    background: var(--surface-2); border-radius: 8px; padding: var(--unit) calc(var(--unit)*1.5);
+    overflow-x: auto; white-space: nowrap; }
+  .chain b { color: var(--text); }
+  .lane.b { border-top: 3px solid var(--b); }
+  .lane.c { border-top: 3px solid var(--c); }
+  .tag-b { color: var(--b); font-weight: 700; }
+  .tag-c { color: var(--c); font-weight: 700; }
+
+  .approaches { display: grid; grid-template-columns: 1fr 1fr; gap: calc(var(--unit)*3); }
+  @media (max-width: 860px) { .approaches { grid-template-columns: 1fr; } }
+  .approach { position: relative; overflow: hidden; }
+  .approach.b { border-top: 4px solid var(--b); }
+  .approach.c { border-top: 4px solid var(--c); }
+  .approach .label { font-family: var(--mono); font-size: 0.75rem; font-weight: 700;
+    letter-spacing: 0.08em; text-transform: uppercase; }
+  .approach.b .label { color: var(--b); }
+  .approach.c .label { color: var(--c); }
+  .prc { list-style: none; padding: 0; margin: var(--unit) 0 0; }
+  .prc li { position: relative; padding-left: 24px; margin-bottom: 6px; font-size: 0.95rem; }
+  .prc li::before { position: absolute; left: 0; top: 0; font-weight: 700; }
+  .prc li.pro::before { content: "+"; color: var(--ok); }
+  .prc li.con::before { content: "\2212"; color: var(--danger); }
+  .fork { background: var(--surface-2); border-radius: 8px; padding: var(--unit) calc(var(--unit)*1.5);
+    margin-top: var(--unit); font-size: 0.9rem; }
+  .fork b { display: block; margin-bottom: 2px; }
+
+  .table-scroll { overflow-x: auto; border: 1px solid var(--border); border-radius: var(--radius); }
+  table { border-collapse: collapse; width: 100%; min-width: 560px; font-size: 0.9rem; }
+  th, td { text-align: left; padding: 10px 14px; border-bottom: 1px solid var(--border); vertical-align: top; }
+  thead th { background: var(--surface-2); font-size: 0.8rem; text-transform: uppercase;
+    letter-spacing: 0.04em; color: var(--muted); }
+  tbody th { font-weight: 600; color: var(--text); white-space: nowrap; }
+  .yes { color: var(--ok); font-weight: 600; } .no { color: var(--danger); font-weight: 600; }
+  .mid { color: var(--warn); font-weight: 600; }
+
+  .steps { counter-reset: step; list-style: none; padding: 0; margin: var(--unit) 0 0; }
+  .steps li { counter-increment: step; position: relative; padding-left: 40px; margin-bottom: calc(var(--unit)*1.5); }
+  .steps li::before { content: counter(step); position: absolute; left: 0; top: 0;
+    width: 26px; height: 26px; border-radius: 50%; background: var(--c); color: #fff;
+    display: grid; place-items: center; font-size: 0.85rem; font-weight: 700; }
+
+  ul.refs { list-style: none; padding: 0; margin: var(--unit) 0 0; }
+  ul.refs li { padding: 8px 0; border-bottom: 1px solid var(--border); font-size: 0.92rem; }
+  ul.refs li:last-child { border-bottom: none; }
+  ul.refs .who { color: var(--muted); font-size: 0.85rem; }
+
+  .toolbar { display: flex; gap: var(--unit); flex-wrap: wrap; margin: calc(var(--unit)*2) 0; }
+  button.copy { font: inherit; font-size: 0.9rem; font-weight: 600; cursor: pointer;
+    border: 1px solid var(--border); background: var(--surface); color: var(--text);
+    padding: 8px 16px; border-radius: 8px; transition: all .15s; }
+  button.copy:hover { border-color: var(--c); color: var(--c); }
+  button.copy:focus-visible { outline: 2px solid var(--c); outline-offset: 2px; }
+  button.copy.done { border-color: var(--ok); color: var(--ok); }
+
+  footer.page { margin-top: calc(var(--unit)*5); padding-top: calc(var(--unit)*2);
+    border-top: 1px solid var(--border); color: var(--muted); font-size: 0.85rem; }
+
+  @media print {
+    body { background: #fff; color: #000; padding: 0; font-size: 12px; }
+    .toolbar, button.copy { display: none !important; }
+    .card, .lane, .approach { break-inside: avoid; }
+    a { color: #000; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="page">
+    <span class="pill"><span class="dot" style="background:var(--c)"></span>Planned · two opt-in add-ons — B first, then C</span>
+    <h1 style="margin-top:12px">Consistent-Hash Exchange Scale-Out — Roadmap</h1>
+    <p class="sub">How hoppity will offer partitioned, ordered, horizontally-scaled consumption over a RabbitMQ consistent-hash exchange (CHE).</p>
+    <p class="meta">Status: planning · 2026-07-14</p>
+  </header>
+
+  <div class="toolbar">
+    <button class="copy" id="copyPrompt">Copy roadmap as prompt</button>
+    <button class="copy" id="copyJson">Copy as JSON</button>
+  </div>
+
+  <section class="card">
+    <h2 style="margin-top:0">TL;DR</h2>
+    <p>CHE scale-out ships as <strong>opt-in add-ons, not core</strong>. There are two viable patterns — <strong>B</strong> (per-instance queues) and <strong>C</strong> (fixed queues + coordinated assignment) — with materially different trade-offs around durability and infrastructure. A hoppity user would rationally choose either depending on their needs, so hoppity offers both rather than picking for them.</p>
+    <p style="margin-bottom:0"><strong>Order of work:</strong> build <strong>B first</strong> (no external dependencies), then <strong>C</strong> (requires a coordinator). Separate efforts.</p>
+  </section>
+
+  <h2>The core insight: where does rebalancing live?</h2>
+  <p>A CHE routes <em>key → queue</em>. Preserving per-key ordering and affinity requires <em>one consumer per queue</em>. But RabbitMQ has <strong>no native consumer-group assignment</strong> — nothing decides which instance owns which queue, or reshuffles when instances come and go. The two approaches are simply different answers to <em>"who owns rebalancing?"</em></p>
+
+  <div class="flow">
+    <div class="lane b">
+      <h4><span class="tag-b">Approach B</span> — RabbitMQ's hash ring owns it</h4>
+      <div class="chain">key → <b>CHE ring</b> → <b>per-instance queue</b> → that instance</div>
+      <p style="font-size:.9rem;margin:.5rem 0 0">Each instance declares its <em>own</em> queue. Adding/removing an instance changes the ring; ~1/N of keys migrate automatically. No coordinator — the broker <em>is</em> the coordinator.</p>
+    </div>
+    <div class="lane c">
+      <h4><span class="tag-c">Approach C</span> — your coordinator owns it</h4>
+      <div class="chain">key → <b>CHE ring</b> → <b>fixed queue</b> → assigned instance</div>
+      <p style="font-size:.9rem;margin:.5rem 0 0">Fixed durable queues; a coordinator assigns each instance a disjoint <em>subset</em> and reshuffles on membership change. The queue is decoupled from any instance's lifecycle.</p>
+    </div>
+  </div>
+
+  <div class="callout">
+    <strong>This single difference drives every trade-off below.</strong> B pushes rebalancing into the broker (simple, but the queue lives and dies with its instance). C keeps it in your app (durable and loss-free, but you run the machinery RabbitMQ won't give you).
+  </div>
+
+  <h2>The two add-ons</h2>
+  <div class="approaches">
+    <div class="card approach b">
+      <span class="label">Add-on B · build first</span>
+      <h3 style="margin-top:6px">Per-instance queues</h3>
+      <p style="font-size:.95rem">Each service instance declares its own queue(s) bound to the CHE. The ring spreads keys across instances; scaling out = more queues = more throughput. Actor affinity falls out naturally: <code>customerId → one queue → one instance</code>.</p>
+      <ul class="prc">
+        <li class="pro">No external dependencies — the hash ring handles distribution and failover</li>
+        <li class="pro">Automatic rebalance on scale/deploy/crash (~1/N keys migrate)</li>
+        <li class="pro">Simplest operational model; closest to the classic CHE pattern</li>
+        <li class="con">Ephemeral queues → <strong>in-flight message loss</strong> when an instance dies ungracefully</li>
+        <li class="con">Ring churns on every membership change (accepted consistent-hash cost)</li>
+        <li class="con">Brief ordering hiccup for a key while it migrates across the remap</li>
+      </ul>
+      <div class="fork">
+        <b>Internal fork — durability vs availability</b>
+        <span style="color:var(--muted)"><em>Ephemeral</em> (exclusive/auto-delete): failover, but lose the dead queue's messages. <em>Stable-durable</em> (ordinal names, e.g. StatefulSet): no loss on crash (pod reclaims its queue), but that key-slice stalls while the pod is down + orphans on scale-down. Pick as part of B's design.</span>
+      </div>
+      <p style="font-size:.9rem;margin-top:var(--unit)"><strong>Best for:</strong> actor workloads where state rehydrates or an upstream outbox/retry re-drives dropped messages; teams that want zero coordination infra.</p>
+    </div>
+
+    <div class="card approach c">
+      <span class="label">Add-on C · build second</span>
+      <h3 style="margin-top:6px">Fixed queues + coordinated subset assignment</h3>
+      <p style="font-size:.95rem">A fixed set of <code>N</code> durable queues. Each instance consumes a disjoint <em>subset</em>; a coordinator assigns and rebalances. Over-partition (N &gt; instances) so subsets divide cleanly and there's headroom to scale.</p>
+      <ul class="prc">
+        <li class="pro">Durable, stable queues → <strong>no message loss</strong> (un-acked requeue, queue reassigned to a live instance)</li>
+        <li class="pro">True failover without loss — the <em>consumer</em> moves, not the queue</li>
+        <li class="pro">Queue identity independent of instance lifecycle</li>
+        <li class="con">Needs coordination RabbitMQ won't provide — external dependency by design</li>
+        <li class="con">More moving parts; rebalance = stop-assign-resume across consumers</li>
+      </ul>
+      <div class="fork">
+        <b>Two assignment strategies</b>
+        <span style="color:var(--muted)"><em>Static / ordinal:</em> instance <code>i</code> of <code>m</code> owns queues where <code>idx % m == i</code> (StatefulSet ordinal; Kafka "static membership"). You supply <code>i</code>+<code>m</code>. <em>Dynamic / coordinated:</em> a leader assigns &amp; rebalances (Rebalanser-style: lease-elected coordinator over a DB/consensus backend). Start static; add dynamic only if needed.</span>
+      </div>
+      <p style="font-size:.9rem;margin-top:var(--unit)"><strong>Best for:</strong> no-loss requirements, stable partitions, teams fine with running (or depending on) a coordinator. External deps are an accepted, eyes-open cost of choosing C.</p>
+    </div>
+  </div>
+
+  <h2>B vs C at a glance</h2>
+  <div class="table-scroll">
+    <table>
+      <thead>
+        <tr>
+          <th>Dimension</th>
+          <th style="color:var(--b)">B · per-instance queues</th>
+          <th style="color:var(--c)">C · fixed + assignment</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><th>Scales out throughput</th><td><span class="yes">Yes</span></td><td><span class="yes">Yes</span></td></tr>
+        <tr><th>Per-key ordering</th><td><span class="yes">Yes</span> (per instance)</td><td><span class="yes">Yes</span> (per instance)</td></tr>
+        <tr><th>Actor affinity</th><td><span class="yes">Yes</span></td><td><span class="yes">Yes</span></td></tr>
+        <tr><th>Failover</th><td><span class="mid">Ring remaps</span></td><td><span class="yes">Yes</span> (reassign)</td></tr>
+        <tr><th>Message loss on crash</th><td><span class="no">Possible</span> (ephemeral)</td><td><span class="yes">None</span></td></tr>
+        <tr><th>Queue identity</th><td>Per-instance</td><td>Stable (fixed)</td></tr>
+        <tr><th>Rebalance owner</th><td>RabbitMQ hash ring</td><td>Your coordinator</td></tr>
+        <tr><th>External dependency</th><td><span class="yes">None</span></td><td><span class="no">Coordinator</span> (ordinal or lib)</td></tr>
+        <tr><th>Build order</th><td>First</td><td>Second</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2>Sequencing</h2>
+  <ol class="steps">
+    <li><strong>Add-on B — per-instance queues.</strong> Simpler, no external deps. Decide the ephemeral-vs-stable fork as part of its design.</li>
+    <li><strong>Add-on C — fixed queues + subset assignment.</strong> Start with static/ordinal assignment; reach for a dynamic coordinator only if the ordinal model proves insufficient.</li>
+  </ol>
+
+  <h2>References</h2>
+  <ul class="refs">
+    <li><a href="https://github.com/rabbitmq/rabbitmq-server/blob/main/deps/rabbitmq_consistent_hash_exchange/README.md">Consistent Hash Exchange plugin README</a> <span class="who">— official spec: routing-key hashing, binding weights, restart caveat, cardinality warning</span></li>
+    <li><a href="https://jack-vanlightly.com/blog/2018/7/22/creating-consumer-groups-in-rabbitmq-with-rebalanser-part-1">Creating Consumer Groups in RabbitMQ with Rebalanser — Part 1</a> <span class="who">— Jack Vanlightly · the assignment/rebalance model for C</span></li>
+    <li><a href="https://jack-vanlightly.com/blog/2018/7/25/rabbitmq-work-queues-avoiding-data-inconsistency-with-rebalanser">Avoiding Data Inconsistency with Rebalanser</a> <span class="who">— Vanlightly · correctness pitfalls when a queue briefly has two consumers</span></li>
+    <li><a href="https://jack-vanlightly.com/blog/2018/11/14/why-i-am-not-a-fan-of-the-rabbitmq-sharding-plugin">Why I Am Not a Fan of the RabbitMQ Sharding Plugin</a> <span class="who">— Vanlightly · why the built-in plugin doesn't solve consumer assignment</span></li>
+    <li><a href="https://www.cloudamqp.com/blog/the-consistent-hash-exchange-making-rabbitmq-a-better-broker.html">The Consistent Hash Exchange: Making RabbitMQ a Better Broker</a> <span class="who">— CloudAMQP · CHE + consumer-group framing</span></li>
+    <li><a href="https://www.appshapes.com/kafka-static-membership-rebalancing-and-kubernetes-stateful-set/">Kafka Static Membership using Kubernetes StatefulSet</a> <span class="who">— the ordinal/StatefulSet mechanic behind C-static</span></li>
+    <li><a href="https://alexravikovich.medium.com/rabbitmq-partial-order-implementation-using-consistent-hash-exchange-golang-29ab6f439021">Partial Order Implementation using CHE (Go)</a> <span class="who">— worked partial-ordering example</span></li>
+    <li><a href="https://github.com/rabbitmq/rabbitmq-sharding">rabbitmq-sharding plugin</a> <span class="who">— reference; automates queue creation but not consumer assignment</span></li>
+  </ul>
+
+  <footer class="page">
+    Hoppity — contract-driven RabbitMQ topology builder · CHE scale-out roadmap · 2026-07-14 · B then C, as independent opt-in add-ons.
+  </footer>
+
+</div>
+
+<script>
+  const summary = `Hoppity CHE scale-out roadmap (2026-07-14):
+
+GOAL: Offer consistent-hash-exchange scale-out as two opt-in add-ons (not core), because the two viable patterns have materially different tradeoffs and a user would rationally choose either depending on durability/infra needs.
+
+CORE INSIGHT: A CHE routes key->queue; ordering needs one-consumer-per-queue; RabbitMQ has no native consumer-group assignment. The approaches differ only in WHO owns rebalancing.
+
+ADD-ON B — per-instance queues (build first): each instance declares its own queue bound to the CHE; the hash ring distributes keys and rebalances automatically. Pros: no external deps, auto failover/rebalance, simplest. Cons: ephemeral queues can lose in-flight messages on ungraceful crash; ring churns on membership change. Internal fork: ephemeral (failover, lossy) vs stable-durable ordinal names (no loss, but stalls a slice on downtime + orphan cleanup).
+
+ADD-ON C — fixed queues + coordinated subset assignment (build second): fixed N durable queues; a coordinator assigns each instance a disjoint subset and rebalances. Pros: no message loss, true failover (consumer moves, not queue), stable queues. Cons: needs a coordinator RabbitMQ won't provide. Assignment: static/ordinal (i of m, idx%m==i, StatefulSet) or dynamic (Rebalanser-style lease-elected coordinator over a DB/consensus backend).
+
+SEQUENCING: build B first (no deps), then C (coordinator), starting with static/ordinal assignment. Separate efforts.`;
+
+  const json = {
+    title: "Hoppity CHE scale-out roadmap",
+    date: "2026-07-14",
+    goal: "Offer CHE scale-out as two opt-in add-ons (not core); user chooses B or C by durability/infra needs.",
+    coreInsight: "CHE routes key->queue; ordering needs one-consumer-per-queue; RabbitMQ has no native consumer-group assignment. Approaches differ only in who owns rebalancing.",
+    addons: {
+      B: { name: "per-instance queues", buildOrder: 1, rebalanceOwner: "RabbitMQ hash ring", externalDeps: false,
+           pros: ["no external deps", "auto rebalance/failover", "simplest ops"],
+           cons: ["in-flight loss on crash (ephemeral)", "ring churn on membership change"],
+           fork: "ephemeral (failover, lossy) vs stable-durable ordinal (no loss, stalls on downtime + orphans)" },
+      C: { name: "fixed queues + coordinated subset assignment", buildOrder: 2, rebalanceOwner: "your coordinator", externalDeps: true,
+           pros: ["no message loss", "true failover (consumer moves)", "stable queues"],
+           cons: ["needs a coordinator RabbitMQ won't provide", "more moving parts"],
+           assignment: ["static/ordinal (i of m, idx%m==i, StatefulSet)", "dynamic (Rebalanser-style leader + DB/consensus)"] }
+    },
+    sequencing: ["build add-on B (no deps)", "build add-on C (coordinator), start with static/ordinal"]
+  };
+
+  function flash(btn, txt) { const o = btn.textContent; btn.textContent = txt; btn.classList.add('done');
+    setTimeout(() => { btn.textContent = o; btn.classList.remove('done'); }, 1400); }
+  function copy(text, btn) {
+    navigator.clipboard.writeText(text).then(() => flash(btn, '✓ Copied'))
+      .catch(() => { const t = document.createElement('textarea'); t.value = text; document.body.appendChild(t);
+        t.select(); document.execCommand('copy'); t.remove(); flash(btn, '✓ Copied'); });
+  }
+  document.getElementById('copyPrompt').addEventListener('click', e => copy(summary, e.currentTarget));
+  document.getElementById('copyJson').addEventListener('click', e => copy(JSON.stringify(json, null, 2), e.currentTarget));
+</script>
+</body>
+</html>
